@@ -14,8 +14,8 @@ close your laptop, and nobody's photos are sent anywhere.
 
 The model is one you trained, on images you collected, of categories you chose.
 
-You will also hand in a short report about what went wrong, because something
-will.
+You will also hand in two reports. One page that you write yourself, and a long
+one that you write with your agent. More on both at the bottom.
 
 ## What you are given and what you write
 
@@ -75,7 +75,7 @@ need it. Everything else will fail until you write it.
 
 ---
 
-## Problem 1. Choose your categories and collect the images (20 points)
+## Problem 1. Choose your categories and collect the images
 
 Choose 3 to 5 categories. They have to be things you care about for some
 reason, and you have to say what that reason is.
@@ -94,15 +94,12 @@ nothing else. And categories that are too close together, such as three breeds
 of white dog, will not work at all this time. Choose something you would still
 find interesting if the answer turned out to be 60% right.
 
-TODO for your report:
+Write this down:
 - Why these categories? Why do you care?
 - What do you think the model will actually use to tell them apart?
 - How many images did you get for each? Show the counts.
 
-How it is graded: 10 points for a set of categories that works and has enough
-images, 5 for collecting them properly, 5 for how interesting the choice is.
-
-## Problem 2. Turn your folder into numbers (15 points)
+## Problem 2. Turn your folder into numbers
 
 Write `load_folder` and `split_train_test` in `src/data.py`.
 
@@ -120,10 +117,10 @@ training set and the test set, your test accuracy is not a measurement, it is a
 memory. This is the single most common mistake in this assignment and it always
 makes your numbers look better than they are.
 
-TODO for your report:
+Write this down:
 - What did you decide about image size and colour, and why?
 
-## Problem 3. Train it and report the first result (20 points)
+## Problem 3. Train it and report the first result
 
 Write `build_model` and `train` in `src/train.py`, and `predict_logits`,
 `accuracy` and `confusion_matrix` in `src/evaluate.py`.
@@ -144,7 +141,7 @@ fill in this table. Every run prints the row for you.
 Useful things to change: `--size 16` and `--size 64`, `--gray`,
 `--hidden 32` and `--hidden 256 64`, `--epochs`, `--lr`.
 
-TODO for your report:
+Write this down:
 - The loss curve from `results/run_curves.png`. Did the loss go down? Did it
   keep going down, or did it flatten out?
 - Your train accuracy is higher than your test accuracy. By how much? What does
@@ -152,7 +149,7 @@ TODO for your report:
 - The confusion matrix from `results/run_confusion.png`. Which two categories
   does it mix up most? Does that surprise you?
 
-## Problem 4. Clean your data and train again (15 points)
+## Problem 4. Clean your data and train again
 
 Look at your images. Actually look at them, all of them. Downloaded images
 contain drawings, logos, collages, screenshots, pictures of the wrong thing,
@@ -164,13 +161,13 @@ pictures where the object was not the main thing in the frame" is a rule.
 
 Then run `python src/run.py --tag clean` and compare.
 
-TODO for your report:
+Write this down:
 - Your deletion rule, in one or two sentences.
 - How many images you removed from each category.
 - The accuracy before and after. If it went down, say so and think about why.
   That happens, and an honest explanation is worth more than a good number.
 
-## Problem 5. Test it on photographs you took yourself (20 points)
+## Problem 5. Test it on photographs you took yourself
 
 Everything so far used images from the internet. Now take your own.
 
@@ -189,7 +186,7 @@ Your accuracy here will almost certainly be much worse than your test accuracy
 from Problem 3. That is the point of this problem, and it is not a mistake you
 made. Explaining it is the assignment.
 
-TODO for your report:
+Write this down:
 - The accuracy on internet images and the accuracy on your own photographs,
   side by side.
 - Five mistakes it was confident about, with the pictures. For each one, what
@@ -197,7 +194,7 @@ TODO for your report:
 - What is different about your photographs? Background, lighting, angle,
   distance, what else is in the frame?
 
-## Problem 6. Put the demo on the web (10 points)
+## Problem 6. Put the demo on the web
 
 `src/run.py` already wrote everything the page needs into `docs/`. Look at it
 first on your own machine:
@@ -227,7 +224,7 @@ repository on the GitHub website. If you only see `index.html` and `app.js`,
 you trained a model but never committed it, and your published page will be
 blank.
 
-TODO for your report:
+Write this down:
 - Your GitHub Pages address.
 - One sentence on what happens when you show it something that is none of your
   categories.
@@ -238,38 +235,77 @@ TODO for your report:
 
 1. The address of your web demo.
 2. The address of your code repository.
-3. Your report, as a PDF, 2 to 4 pages. Every TODO above, in order, with the
-   pictures from `results/`.
-4. The complete output of `python src/check.py`, pasted into the report.
+3. The short report.
+4. The long report.
 5. `data/my_photos/` as a zip. Not the downloaded images, only your own
    photographs.
 
-Also, in the report, one short section that is not about your model:
+## The short report
 
-> One thing my coding agent got wrong, and how I noticed.
+One page. Not one and a bit. One.
 
-Everybody's agent gets something wrong. It writes code that runs and does the
-wrong thing, or it tells you an accuracy it did not measure, or it quietly
-changes something you asked it not to. Tell us about one of those. What did it
-claim, what actually happened, and what made you look? An answer of "nothing
-went wrong" will be read as "I did not check".
+Write it yourself. No language model, at any stage, including for tidying it up
+afterwards. If Korean is your first language, write it in Korean. This is the
+one piece of work in this course where neither your English nor your polish
+counts for anything, and what you actually think counts for everything.
 
-## Grading
+Four questions:
 
-Problems 1 to 6 are worth 100 points as marked above. The report is where most
-of them are earned. A model that scores 95% with no explanation is worth less
-than a model that scores 55% whose owner can tell you exactly which pictures it
-fails on and why.
+1. What does your model tell apart, and why did you pick that?
+2. The worst mistake it makes. Which photograph, what did it answer, and what
+   do you think made it answer that?
+3. One thing your coding agent got wrong. What did it claim, what was actually
+   true, and what made you look?
+4. If you started again tomorrow, what would you do differently?
+
+On the third question: everybody's agent gets something wrong. It writes code
+that runs and does the wrong thing, or it reports an accuracy it never
+measured, or it quietly changes something you told it not to. "Nothing went
+wrong" will be read as "I did not check".
+
+## The long report
+
+As long as you like. Write it with your agent. That is what it is for, and it
+is the right tool for this job.
+
+Be aware of who reads it. It will be read by a program, and by you while you
+are writing the short report. So write it for those two readers: complete,
+ordered, every number traceable. Do not write an introduction, and do not
+explain what a neural network is.
+
+It holds:
+
+- Everything the "Write this down" boxes asked for, in the order they appear
+- Your experiment table, at least four rows
+- The pictures from `results/` for every run you refer to
+- The complete output of `python src/check.py`
+- Your cleaning rule and how many images you removed from each category
+- The accuracy on internet images and the accuracy on your own photographs,
+  next to each other
+
+## How this is graded
+
+There are no points attached to the problems. Three things are looked at:
+
+- Whether the demo works, at the address you gave, on someone else's computer
+- Whether the numbers in your long report are the ones `check.py` actually
+  prints
+- The short report
+
+A model that scores 95% with no explanation is worth less than one that scores
+55% whose owner can tell you exactly which pictures it fails on and why.
 
 ## Using AI coding agents
 
-Use them. That is what this course is about. You are responsible for what you
-submit: you have to be able to explain what you were trying to do, how you got
-your result, and what it means, even if you cannot explain every line.
+Use them for the code and for the long report. That is what this course is
+about. You are responsible for what you submit: you have to be able to explain
+what you were trying to do, how you got your result, and what it means, even if
+you cannot explain every line.
 
-Two rules that follow from that. Never write a number in your report that you
-did not see printed by code you ran. And when the agent says it fixed
-something, run the test yourself before you believe it.
+Three rules follow from that. Never write a number that you did not see printed
+by code you ran. When the agent says it fixed something, run the test yourself
+before you believe it. And write the short report with your own hands, because
+it is the one place where the answer has to be yours.
 
 ## When you are stuck
 

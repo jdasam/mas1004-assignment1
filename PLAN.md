@@ -179,9 +179,21 @@ Check: you opened the address on your phone, away from your own wifi, and it
 worked. If the page is blank, look at your repository on the GitHub website and
 see whether `docs/model.json` and `docs/weights.bin` are actually there.
 
-## Step 15. Write the report
+## Step 15. Write the long report
 
-Go back through the TODO lists in README.md in order. You should already have
-every number and every picture you need, from the checks above.
+Go back through the "Write this down" boxes in README.md in order, with your
+agent. You should already have every number and every picture you need, from
+the checks above.
 
-Check: every number in your report is one you saw printed by code you ran.
+Check: every number in it is one you saw printed by code you ran.
+
+## Step 16. Write the short report
+
+Close the agent. One page, by yourself, in Korean if that is your first
+language. The four questions are in README.md.
+
+This is the last step for a reason. You cannot answer question 2 or 4 until you
+have seen your model fail, and you cannot answer question 3 unless you were
+paying attention the whole way through.
+
+Check: it fits on one page, and you wrote all of it.
