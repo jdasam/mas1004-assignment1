@@ -32,6 +32,7 @@ TIMEOUT = 8
 WORKERS = 16        # how many downloads to run at once
 OVERSAMPLE = 3      # most search results are dead links, so gather far more
 MAX_PAGES = 12      # one search page only ever returns about 35 results
+BACKENDS = ["duckduckgo", "bing"]  # if one search engine fails, use the next
 
 
 def safe_dirname(name):
@@ -45,7 +46,8 @@ def search_urls(query, how_many):
 
     One search page only gives about 35 results however many you ask for, and
     a good share of those links are dead by the time we get to them. So we walk
-    through pages and gather far more links than we actually need.
+    through pages and gather far more links than we actually need. If one search
+    engine fails or runs out of results, we continue with the next one.
     """
     from ddgs import DDGS
 
@@ -54,24 +56,30 @@ def search_urls(query, how_many):
     seen = set()
 
     with DDGS() as ddgs:
-        for page in range(1, MAX_PAGES + 1):
-            try:
-                hits = ddgs.images(query, max_results=100, page=page)
-            except Exception as error:
-                print(f"  search stopped at page {page}: {error}")
-                break
+        for backend in BACKENDS:
+            for page in range(1, MAX_PAGES + 1):
+                try:
+                    hits = ddgs.images(
+                        query, max_results=100, page=page, backend=backend
+                    )
+                except Exception as error:
+                    print(f"  {backend} stopped at page {page}: {error}")
+                    break
 
-            before = len(urls)
-            for hit in hits:
-                url = hit.get("image")
-                if url and url not in seen:
-                    seen.add(url)
-                    urls.append(url)
+                before = len(urls)
+                for hit in hits:
+                    url = hit.get("image")
+                    if url and url not in seen:
+                        seen.add(url)
+                        urls.append(url)
 
-            if len(urls) == before:
-                break  # this page told us nothing new, so there is no more
+                if len(urls) == before:
+                    break  # this page told us nothing new, so there is no more
+                if len(urls) >= wanted:
+                    break
+
             if len(urls) >= wanted:
-                break
+                break  # enough links, no need to ask the next search engine
 
     return urls
 
