@@ -12,7 +12,10 @@ come from your webcam, from a file you upload, or from something you draw with
 the mouse. The model runs inside the page itself, so it keeps working after you
 close your laptop, and nobody's photos are sent anywhere.
 
-The model is one you trained, on images you collected, of categories you chose.
+The model is ResNet18, a network that was already trained on ImageNet, 1.2
+million photographs of 1,000 kinds of thing. You replace its last layer so that
+it answers with your categories, and train it further on images you collected,
+of categories you chose.
 
 You will also hand in two reports. One page that you write yourself, and a long
 one that you write with your agent. More on both at the bottom.
@@ -20,14 +23,14 @@ one that you write with your agent. More on both at the bottom.
 ## What you are given and what you write
 
 You are given the parts where there is nothing to learn and a lot to get stuck
-on: the image downloader, the export script, the web page, the checker, and a
-test for each function you have to write.
+on: the image downloader, the cleaning tool, the export script, the web page,
+the checker, and a test for each function you have to write.
 
-You write four things:
+You write these:
 
 | file | functions | problem |
 |---|---|---|
-| `src/data.py` | `load_folder`, `split_train_test` | 2 |
+| `src/data.py` | `prepare_image`, `load_folder`, `split_train_test` | 2 |
 | `src/train.py` | `build_model`, `train` | 3 |
 | `src/evaluate.py` | `predict_logits`, `accuracy`, `confusion_matrix` | 3 |
 | `src/evaluate.py` | `worst_examples` | 5 |
@@ -54,6 +57,11 @@ Everything you do from now on happens in your copy, and you hand in its
 address. Commit and push as you go. A commit you did not push has not been
 handed in.
 
+If you made your copy on 29 September before the starter code changed to
+ResNet18 (your `src/data.py` has no `prepare_image` in it), make a new copy
+from the template and move your `data/` folder into it. Your downloaded images
+are not in git, so they do not come with the new copy on their own.
+
 ## Setting up
 
 ```
@@ -73,6 +81,12 @@ Those tests cover code that was given to you, so they should pass before you
 write a single line. If they do not, fix that first and ask for help if you
 need it. Everything else will fail until you write it.
 
+Training ResNet18 is much faster on a GPU. On a laptop without one, a run of
+10 epochs on 400 images takes several minutes. Google Colab gives you a GPU
+for free, and `assignment1_colab.ipynb` sets everything up there. Open it
+directly in Colab with this link:
+https://colab.research.google.com/github/jdasam/mas1004-assignment1/blob/main/assignment1_colab.ipynb
+
 ---
 
 ## Problem 1. Choose your categories and collect the images
@@ -87,12 +101,14 @@ python src/collect.py --classes "espresso cup,wine glass,paper coffee cup" --n 1
 This downloads images into `data/raw/`. Then copy `data/raw` to `data/clean`
 and work on the copy, so you always have the original to go back to.
 
-Two warnings about your choice. Categories that are told apart by colour and
-overall shape will work far better than categories that are told apart by small
-details, because the model you are going to train sees a 32 by 32 picture and
-nothing else. And categories that are too close together, such as three breeds
-of white dog, will not work at all this time. Choose something you would still
-find interesting if the answer turned out to be 60% right.
+Two things to think about when you choose. In Problem 5 you test the model on
+photographs you take yourself, so choose things you can actually photograph.
+And the model can only use what is visible in the picture: an expensive wine
+glass and a cheap one that look the same cannot be told apart by any model.
+Because you start from a network that has already seen 1.2 million photos,
+categories that differ in small details, such as similar breeds of dog, are
+worth trying. Choose something you would still find interesting when the model
+gets it wrong.
 
 Write this down:
 - Why these categories? Why do you care?
@@ -101,11 +117,18 @@ Write this down:
 
 ## Problem 2. Turn your folder into numbers
 
-Write `load_folder` and `split_train_test` in `src/data.py`.
+Write `prepare_image`, `load_folder` and `split_train_test` in `src/data.py`.
 
 ```
 pytest tests/test_data.py
 ```
+
+`prepare_image` prepares one photo exactly the way every ImageNet photo was
+prepared when ResNet18 was trained: the shorter side resized to 256, the
+224 by 224 square in the middle cut out, and each colour channel scaled with
+the ImageNet mean and standard deviation. The network learned to read photos
+prepared like that, so it can only read yours if they are prepared the same
+way. The web page does the same steps in JavaScript.
 
 Your images are all different sizes and shapes, some are broken, and one of
 them is a text file that ended up with a .jpg name. That is normal. The tests
@@ -118,7 +141,8 @@ memory. This is the single most common mistake in this assignment and it always
 makes your numbers look better than they are.
 
 Write this down:
-- What did you decide about image size and colour, and why?
+- One of your photos next to what `prepare_image` made of it. What was cut
+  off? Find a photo where the crop cut off part of the thing you care about.
 
 ## Problem 3. Train it and report the first result
 
@@ -130,16 +154,27 @@ pytest tests/test_train.py tests/test_evaluate.py
 python src/run.py
 ```
 
-`src/run.py` trains, measures, draws three pictures into `results/`, and
-exports the web files. Run it at least four times with different settings and
-fill in this table. Every run prints the row for you.
+`src/run.py` trains, measures, draws three pictures into `results/`, and saves
+the model there. Run it at least these three ways, plus at least one more
+setting of your own choosing, and fill in this table. Every run prints its row
+for you. Do all of this before you clean anything: the run tagged `run` is the
+"before" that Problem 4 compares against.
 
-| image size | colour | hidden layers | parameters | train accuracy | test accuracy |
-|---|---|---|---|---|---|
-| | | | | | |
+```
+python src/run.py
+python src/run.py --scratch --tag scratch
+python src/run.py --freeze --lr 1e-3 --tag frozen
+```
 
-Useful things to change: `--size 16` and `--size 64`, `--gray`,
-`--hidden 32` and `--hidden 256 64`, `--epochs`, `--lr`.
+| tag | start | trained | epochs | lr | trainable parameters | train accuracy | test accuracy |
+|---|---|---|---|---|---|---|---|
+| | | | | | | | |
+
+`--scratch` starts from random numbers instead of the ImageNet weights, as if
+ImageNet had never happened. `--freeze` keeps every ImageNet weight as it is
+and trains only the new last layer. With so few parameters to change it needs
+larger steps, hence `--lr 1e-3`. Other useful things to change: `--epochs`,
+`--lr`, `--batch-size`.
 
 Write this down:
 - The loss curve from `results/run_curves.png`. Did the loss go down? Did it
@@ -148,43 +183,129 @@ Write this down:
   that gap mean?
 - The confusion matrix from `results/run_confusion.png`. Which two categories
   does it mix up most? Does that surprise you?
+- The same images, the same code, and the same number of epochs, starting from
+  ImageNet and starting from random numbers. How far apart are the two test
+  accuracies? Why do you think that is?
+- `--freeze` trains about 0.01% of the parameters. How close does it get to
+  training all of them?
 
 ## Problem 4. Clean your data and train again
 
-Look at your images. Actually look at them, all of them. Downloaded images
-contain drawings, logos, collages, screenshots, pictures of the wrong thing,
-and the same picture four times. Delete what does not belong in `data/clean`.
+This is the most important problem in the assignment.
 
-Write down your rule before you start deleting, and follow it. "I removed
+Every image in `data/clean` got its label from a search engine. You typed
+"wine glass", and whatever came back is now called `wine_glass`: drawings,
+product catalogues, charts about types of wine glass, photos of a bar, the same
+picture four times with different watermarks. The model learns every one of
+them as a true example of its class. Your test set is cut from the same folder,
+so it contains them too, and part of your test accuracy measures how well the
+model agrees with the search engine.
+
+Nobody can clean your data for you, because only you know what you meant by
+each category. That is why you write the rule first.
+
+`src/clean.py` is given to you for this problem. It works without any of the
+code you wrote.
+
+### 1. Look at every image
+
+```
+python src/clean.py look
+```
+
+This draws every image in `data/clean` onto sheets in
+`results/cleaning/look/`, with its file name under it. Open every sheet and
+look at every picture. Note down the kinds of thing that should not be there.
+
+### 2. Write your rule
+
+Write down your rule before you remove anything, and follow it. "I removed
 pictures where the object was not the main thing in the frame" is a rule.
 "I removed the ones that looked wrong" is not.
 
-Then run `python src/run.py --tag clean` and compare.
+### 3. Ask the rest of your data
+
+```
+python src/clean.py suspects
+```
+
+For every image, this trains a small classifier on all the other images and
+asks it what this one is. An image whose own label gets a low probability looks
+unlike the rest of its class. `results/cleaning/suspects/<class>.png` shows
+those images for each class, the most suspicious first.
+
+`results/cleaning/suspects/copies.png` shows pairs of near copies: the same
+picture resized, cropped a little, or saved again with a different watermark.
+Downloaded images are full of them. If one copy ends up in your training set and
+the other in your test set, the model passes the test by remembering, and your
+test accuracy is higher than it should be. Keep one of each pair.
+
+A suspect is not automatically junk. Some are good photos that are just
+unusual, and those are exactly the ones your model needs most. Decide each one
+by your rule.
+
+### 4. Remove what breaks your rule
+
+```
+python src/clean.py remove wine_glass/0063.jpg wine_glass/0069.jpg --reason "chart, not a photo"
+```
+
+This moves the files out of `data/clean` into `data/removed/` and records the
+reason. Nothing is deleted, and nothing is changed in `data/raw`. Use this
+rather than deleting files by hand, so that the counts in the next step are
+right.
+
+### 5. Count, train again, and compare fairly
+
+```
+python src/clean.py count
+python src/run.py --tag clean
+python src/check.py --compare run clean
+```
+
+Cleaning changed your test set as well as your training set, because some of
+the junk you removed was in the test set. So the test accuracy before and after
+cleaning is measured on different images, and the two numbers cannot simply be
+compared. Your own photographs from Problem 5 did not change, so
+`--compare` measures both saved models on them. Take your photographs before
+you get to this step.
 
 Write this down:
-- Your deletion rule, in one or two sentences.
-- How many images you removed from each category.
-- The accuracy before and after. If it went down, say so and think about why.
-  That happens, and an honest explanation is worth more than a good number.
+- Your rule, in one or two sentences, as you wrote it before you started.
+- Three kinds of junk you found, with one picture of each.
+- The table that `python src/clean.py count` prints.
+- How many near copies it found, and what you did with them.
+- Of the first 20 suspects in each class, how many did you remove? Did the
+  suspects include junk you had missed when you looked yourself? Did you find
+  junk that it did not list?
+- The test accuracy before and after, and the accuracy on your own photos
+  before and after, from `--compare`. If a number went down, say so and think
+  about why. That happens, and an honest explanation is worth more than a good
+  number.
 
 ## Problem 5. Test it on photographs you took yourself
 
 Everything so far used images from the internet. Now take your own.
 
+Take these early, because Problem 4 uses them too.
+
 Take at least 5 photographs per category yourself and put them in
 `data/my_photos/<category>/`, using exactly the category names from your
-training folders. Write `worst_examples` in `src/evaluate.py`, then run:
+training folders. Write `worst_examples` in `src/evaluate.py`, then put your
+cleaned model on your page and run the checker:
 
 ```
+python src/export_web.py --tag clean
 python src/check.py
 ```
 
-It measures your model on your own photographs and prints a confusion matrix
-and the mistakes it was most confident about.
+`check.py` measures the model that is now on your page on your own
+photographs, and prints a confusion matrix and the mistakes it was most
+confident about.
 
-Your accuracy here will almost certainly be much worse than your test accuracy
-from Problem 3. That is the point of this problem, and it is not a mistake you
-made. Explaining it is the assignment.
+Your accuracy here will probably be worse than your test accuracy from
+Problem 3. That is not a mistake you made. Explaining it is the assignment. If
+it is not worse, the photos it does get wrong are still the ones to explain.
 
 Write this down:
 - The accuracy on internet images and the accuracy on your own photographs,
@@ -196,7 +317,7 @@ Write this down:
 
 ## Problem 6. Put the demo on the web
 
-`src/run.py` already wrote everything the page needs into `docs/`. Look at it
+`src/export_web.py` wrote everything the page needs into `docs/`. Look at it
 first on your own machine:
 
 ```
@@ -208,8 +329,8 @@ not work, and neither will the webcam, because browsers only allow cameras on
 `https://` pages and on `localhost`.
 
 Check the badge at the top of the page. If it is red, the page is preparing
-images differently from the way you prepared them for training, and the demo is
-lying to you. Fix that before you publish.
+images differently from the way your `prepare_image` prepared them for
+training, and the demo is lying to you. Fix that before you publish.
 
 Then commit and push, and turn on GitHub Pages: your repository, Settings,
 Pages, then Source "Deploy from a branch", Branch `main`, Folder `/docs`, Save.
@@ -219,10 +340,12 @@ minute or two. The first time you look it is often a 404. Wait and reload.
 The folder is called `docs` for exactly this reason. GitHub Pages publishes a
 folder with that name and no other configuration.
 
-Check that `docs/model.json` and `docs/weights.bin` really are in your
-repository on the GitHub website. If you only see `index.html` and `app.js`,
-you trained a model but never committed it, and your published page will be
-blank.
+`docs/model.onnx` is about 45 MB. Every time you commit a new one, another
+45 MB goes into the history of your repository, so export and commit only the
+model you want to publish, not every experiment. Check that `docs/model.onnx`
+really is in your repository on the GitHub website. If you only see
+`index.html` and `app.js`, you trained a model but never committed it, and your
+published page will not load.
 
 Write this down:
 - Your GitHub Pages address.
@@ -279,7 +402,8 @@ It holds:
 - Your experiment table, at least four rows
 - The pictures from `results/` for every run you refer to
 - The complete output of `python src/check.py`
-- Your cleaning rule and how many images you removed from each category
+- Your cleaning rule, the output of `python src/clean.py count`, and the
+  suspects and near copies you removed or kept
 - The accuracy on internet images and the accuracy on your own photographs,
   next to each other
 
@@ -314,4 +438,6 @@ it is the one place where the answer has to be yours.
 - Read the error at the bottom of the traceback, not the top.
 - If a test fails, paste the whole test output to your agent, not your summary
   of it.
+- `CUDA out of memory` means the batch does not fit on the GPU. Run again with
+  a smaller `--batch-size`, such as 16.
 - Ask in class. Both Tuesday and Thursday have time for this.

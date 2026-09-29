@@ -1,8 +1,8 @@
 # The plan
 
 This is the plan I would write before starting this assignment. Give it to your
-coding agent one step at a time, not all at once. An agent handed twelve steps
-will do a bad job of all twelve.
+coding agent one step at a time, not all at once. An agent handed twenty steps
+will do a bad job of all twenty.
 
 Read it first. Part of what this course is teaching is how to write one of
 these yourself, and you cannot learn that by pasting it without looking.
@@ -26,7 +26,7 @@ Not a coding step. Write down 3 to 5 categories and one sentence each on why
 you chose them. Keep the sentences. They go in your report.
 
 Check: you can say out loud what visible difference the model is supposed to
-find between them.
+find between them, and you can photograph all of them yourself.
 
 ## Step 2. Download the images
 
@@ -41,26 +41,42 @@ Change the phrase, not the category.
 
 ## Step 3. Look at what you downloaded
 
-Open the folders and scroll through them. Do not skip this. You are looking for
-what is in there that should not be, and you will need it in Problem 4.
+```
+python src/clean.py look
+```
+
+Open every sheet in `results/cleaning/look/` and look at every picture. Do not
+remove anything yet. Your first training run in Step 9 is on the data as it
+came, so that Problem 4 has something to compare against.
 
 Check: you can name three kinds of junk that came back.
 
-## Step 4. Write `load_folder`
+## Step 4. Take your own photographs
 
-Give the agent the docstring of `load_folder` in `src/data.py` and ask it to
+At least five per category, into `data/my_photos/<category>/`, with the same
+folder names as `data/clean`. Take them in different places and different
+light. If you take them all on the same desk in one evening, Problems 4 and 5
+have nothing to say.
+
+Check: every category has a folder in `data/my_photos/` with at least five
+photos in it.
+
+## Step 5. Write `prepare_image`
+
+Give the agent the docstring of `prepare_image` in `src/data.py` and ask it to
 write the body. Then run:
 
 ```
-pytest tests/test_data.py -k "not split"
+pytest tests/test_data.py -k prepare
 ```
 
 The tests will fail in specific ways. Give the agent the failure text as it is,
 not your summary of it.
 
-Check: every test in that file except the split ones is green.
+Check: every prepare test is green, and you can say what happens to a photo
+that is not square.
 
-## Step 5. Write `split_train_test`
+## Step 6. Write `load_folder` and `split_train_test`
 
 Same again, then `pytest tests/test_data.py`.
 
@@ -72,20 +88,22 @@ repeat.
 
 Check: all of `tests/test_data.py` is green.
 
-## Step 6. Write `build_model` and `train`
+## Step 7. Write `build_model` and `train`
 
 ```
 pytest tests/test_train.py
 ```
 
-The last test trains on three easy blobs and expects over 90%. If your training
-loop has a bug, that is where it shows up. Common ones: forgetting
-`optimiser.step()`, forgetting `optimiser.zero_grad()`, training on the test
-set, or measuring accuracy as a percentage instead of a share.
+The first run downloads the ImageNet weights, about 45 MB. The last test trains
+on three easy blobs and expects over 90%. If your training loop has a bug, that
+is where it shows up. Common ones: forgetting `optimiser.step()`, forgetting
+`optimiser.zero_grad()`, training on the test set, measuring accuracy as a
+percentage instead of a share, and moving the model to the GPU but not the
+batch ("Expected all tensors to be on the same device").
 
 Check: all of `tests/test_train.py` is green.
 
-## Step 7. Write `predict_logits`, `accuracy` and `confusion_matrix`
+## Step 8. Write `predict_logits`, `accuracy` and `confusion_matrix`
 
 ```
 pytest tests/test_evaluate.py -k "not worst"
@@ -93,11 +111,14 @@ pytest tests/test_evaluate.py -k "not worst"
 
 Check: green.
 
-## Step 8. Run the whole thing for the first time
+## Step 9. Run the whole thing for the first time
 
 ```
 python src/run.py
 ```
+
+On a laptop without a GPU this takes several minutes. On Colab with the GPU
+turned on it is much faster.
 
 Look at `results/run_curves.png` and `results/run_confusion.png`.
 
@@ -105,39 +126,62 @@ Check: it finished, it printed a train accuracy and a test accuracy, and the
 loss curve goes down. If the two accuracies are identical, look at your split
 again.
 
-## Step 9. Run it four more times with different settings
+## Step 10. Run it three more times
 
 ```
-python src/run.py --size 16 --tag small
-python src/run.py --gray --tag gray
-python src/run.py --hidden 256 64 --tag deep
-python src/run.py --epochs 80 --tag long
+python src/run.py --scratch --tag scratch
+python src/run.py --freeze --lr 1e-3 --tag frozen
+python src/run.py <a setting of your own> --tag <a name for it>
 ```
 
 Write each printed row into the table in your report as you go. Do not wait
 until the end and try to remember.
 
-Check: four more rows in the table, and you can say which setting mattered most.
+Check: four rows in the table, and you can say how much starting from ImageNet
+changed the test accuracy.
 
-## Step 10. Clean the data and run again
+## Step 11. Write your cleaning rule
 
-Delete the junk from `data/clean`, then:
+Not a coding step. Using what you saw in Step 3, write down in one or two
+sentences what does not belong in each category. Do it before Step 12, so that
+the suspect list does not decide the rule for you.
+
+Check: someone else could apply your rule to your images and remove the same
+ones you would.
+
+## Step 12. Go through the suspects and the near copies
+
+```
+python src/clean.py suspects
+```
+
+Open `results/cleaning/suspects/`. For each class sheet, go through the
+suspects in order and decide each one by your rule. Then go through
+`copies.png` and keep one of each pair. Remove with:
+
+```
+python src/clean.py remove <class>/<file> <class>/<file> --reason "<which part of your rule>"
+```
+
+Then go back through the sheets from Step 3 for anything the suspect list did
+not catch.
+
+Check: `python src/clean.py count` prints how many you removed from each class
+and why, and you know how many of the first 20 suspects in each class you
+removed.
+
+## Step 13. Train on the clean data and compare fairly
 
 ```
 python src/run.py --tag clean
+python src/check.py --compare run clean
 ```
 
-Check: you wrote down your deletion rule and how many you removed, before you
-compare the numbers.
+Check: you have the test accuracy before and after, and the accuracy on your
+own photos before and after, and you can say why the second pair is the fairer
+comparison.
 
-## Step 11. Take your own photographs
-
-At least five per category, into `data/my_photos/<category>/`. Use the same
-folder names.
-
-Check: `python src/check.py` finds them and reports an accuracy.
-
-## Step 12. Write `worst_examples` and look at the mistakes
+## Step 14. Write `worst_examples` and look at the mistakes
 
 ```
 pytest tests/test_evaluate.py
@@ -147,7 +191,17 @@ python src/run.py --tag clean
 Check: `results/clean_worst.png` shows ten pictures with what the model said
 and what they really are.
 
-## Step 13. Open the demo on your own machine
+## Step 15. Put the clean model on your page and check it
+
+```
+python src/export_web.py --tag clean
+python src/check.py
+```
+
+Check: `check.py` says the exported model agrees with Python, and reports an
+accuracy on your own photos.
+
+## Step 16. Open the demo on your own machine
 
 ```
 python -m http.server -d docs 8000
@@ -156,17 +210,20 @@ python -m http.server -d docs 8000
 Open http://localhost:8000.
 
 Check: the badge at the top is green. If it is red, stop and fix it. A red badge
-means the page is not preparing images the way you prepared them for training,
-so everything it says is wrong. Read what the badge says, and check that the
-`--size` and `--gray` of your last run match what `docs/model.json` says.
+means the page is not preparing images the way your `prepare_image` prepared
+them for training, so everything it says is wrong. Read what the badge says,
+fix `prepare_image`, and then train and export again.
 
-## Step 14. Publish it
+## Step 17. Publish it
 
 ```
 git add -A
 git commit -m "trained model and demo"
 git push
 ```
+
+`docs/model.onnx` is about 45 MB, so this push takes a while. Do it once, with
+the model you want to hand in, not after every experiment.
 
 Then on the GitHub website: your repository, Settings, Pages, Source "Deploy
 from a branch", Branch `main`, Folder `/docs`, Save.
@@ -176,10 +233,11 @@ login` for more than ten minutes, stop it and use the website. Getting the
 command line tool authenticated is not what this assignment is about.
 
 Check: you opened the address on your phone, away from your own wifi, and it
-worked. If the page is blank, look at your repository on the GitHub website and
-see whether `docs/model.json` and `docs/weights.bin` are actually there.
+worked. If the page says it could not load the model, look at your repository
+on the GitHub website and see whether `docs/model.onnx` and `docs/model.json`
+are actually there.
 
-## Step 15. Write the long report
+## Step 18. Write the long report
 
 Go back through the "Write this down" boxes in README.md in order, with your
 agent. You should already have every number and every picture you need, from
@@ -187,7 +245,7 @@ the checks above.
 
 Check: every number in it is one you saw printed by code you ran.
 
-## Step 16. Write the short report
+## Step 19. Write the short report
 
 Close the agent. One page, by yourself, in Korean if that is your first
 language. The four questions are in README.md.

@@ -1,79 +1,98 @@
 """Build a model and train it. YOU write the bodies of these functions.
 
-This is the same kind of model you saw in class: a few Linear layers with ReLU
-between them. No convolutions this time. We get to those in week 10.
+The model is ResNet18, a convolutional network that was already trained on
+ImageNet, 1.2 million photographs of 1,000 kinds of thing. You keep everything
+it learned there and replace only its last layer, so that it answers with your
+categories instead of those 1,000. Then you train it further on your images.
 
-Run `pytest tests/test_train.py` after you fill them in.
+Run `pytest tests/test_train.py` after you fill them in. The first run
+downloads the ImageNet weights, about 45 MB.
 """
 
 import torch
 import torch.nn as nn
 
 
-def build_model(input_dim, num_classes, hidden_sizes=(128,)):
-    """Return an untrained model.
+def build_model(num_classes, pretrained=True, freeze=False):
+    """Return a ResNet18 whose last layer has `num_classes` outputs.
 
     Arguments
-        input_dim    int, the D from load_folder. For 32x32 color this is 3072.
-        num_classes  int, how many classes you have
-        hidden_sizes tuple of int, one number per hidden layer.
-                     (128,) means one hidden layer of 128 neurons.
-                     (256, 64) means two hidden layers.
-                     () means no hidden layer at all, just one Linear.
+        num_classes  int, how many categories you have
+        pretrained   True: start from the ImageNet weights,
+                     torchvision.models.ResNet18_Weights.IMAGENET1K_V1.
+                     False: start from random numbers, as if ImageNet had
+                     never happened. You need this for the comparison in
+                     Problem 3.
+        freeze       True: only the new last layer is trained. Every other
+                     parameter keeps the value it came with, which you do by
+                     setting requires_grad to False on it.
+                     False: every parameter is trained.
 
-    Returns a torch.nn.Sequential
+    Returns the model from torchvision.models.resnet18, with its `fc`
+    attribute replaced by a new nn.Linear that has 512 inputs and num_classes
+    outputs.
 
-    The export script only understands two kinds of layer, nn.Linear and
-    nn.ReLU, and it expects them to alternate: Linear, ReLU, Linear, ReLU, ...,
-    Linear. The last layer must be Linear and must have num_classes outputs.
     Do not put a softmax at the end. The loss function adds it for you, and the
     web page adds it for you.
-
-    If you use anything else, for example nn.Dropout or nn.BatchNorm1d, the
-    export script will refuse to run and your web demo will not work.
     """
     raise NotImplementedError("Problem 3: fill in build_model")
 
 
 def train(model, X_train, y_train, X_test, y_test,
-          epochs=30, lr=0.01, batch_size=32):
+          epochs=10, lr=1e-4, batch_size=32):
     """Train the model and report what happened at every epoch.
 
     Arguments
-        model        what build_model returned
-        X_train      np.float32 (N, D)      y_train  np.int64 (N,)
-        X_test       np.float32 (M, D)      y_test   np.int64 (M,)
+        model        what build_model returned, or any other torch model
+        X_train      np.float32 (N, ...)      y_train  np.int64 (N,)
+        X_test       np.float32 (M, ...)      y_test   np.int64 (M,)
         epochs       int, how many times to go through the training set
         lr           float, the learning rate
         batch_size   int, how many rows per step
 
     Returns a dict named history with four keys. Each value is a list of
     `epochs` numbers, one per epoch:
-        "train_loss"  average loss over the training set
-        "test_loss"   average loss over the test set
-        "train_acc"   accuracy on the training set, between 0.0 and 1.0
-        "test_acc"    accuracy on the test set, between 0.0 and 1.0
+        "train_loss"  the mean loss over the batches of that epoch
+        "train_acc"   the share of training rows the model got right in those
+                      batches, between 0.0 and 1.0
+        "test_loss"   the mean loss over the test set, measured after the epoch
+        "test_acc"    the share of the test set it gets right, measured after
+                      the epoch, between 0.0 and 1.0
 
-    The model must be trained in place, so that after this function returns,
-    `model` is the trained one.
+    What to do
+        Use a GPU when there is one:
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        Move the model there once, and each batch there as you use it. Keep
+        X_train and X_test themselves in ordinary memory: they may not fit on
+        the GPU.
+        Shuffle the training rows again at the start of every epoch.
+        Use nn.CrossEntropyLoss, which expects raw outputs, and torch.optim.Adam
+        over the parameters that have requires_grad set.
+        Call model.train() before the training batches and model.eval() before
+        measuring the test set. ResNet contains BatchNorm layers, which behave
+        differently in the two modes.
+        Do not compute gradients while measuring the test set, and never let
+        the test rows change the parameters.
+        Print one line per epoch, so that you can watch it while it runs.
 
-    Use nn.CrossEntropyLoss. It expects raw outputs, not probabilities, which is
-    why build_model has no softmax at the end.
-
-    Do not compute the gradient while you are measuring the test numbers, and
-    remember that measuring is not learning: the test rows must never be used to
-    update the parameters.
+    The model is trained in place. When this function returns, `model` is the
+    trained one, and it is left on the device it was trained on.
     """
     raise NotImplementedError("Problem 3: fill in train")
 
 
+def count_trainable(model):
+    """How many parameters training is allowed to change. Written for you."""
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
 def save(model, path):
-    """Save a trained model. This one is written for you."""
+    """Save a trained model. Written for you."""
     torch.save(model, path)
 
 
 def load(path):
-    """Load a model saved by `save`. This one is written for you."""
-    model = torch.load(path, weights_only=False)
+    """Load a model saved by `save`, onto the CPU. Written for you."""
+    model = torch.load(path, map_location="cpu", weights_only=False)
     model.eval()
     return model

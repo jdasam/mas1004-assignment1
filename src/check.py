@@ -8,12 +8,19 @@ if it disagrees with the numbers your own code printed, one of the two is
 wrong, and finding out which is part of the assignment.
 
 Paste the whole output into your report.
+
+    python src/check.py --compare run clean
+
+also measures the models saved by those runs on your own photos, which is the
+fair way to see what cleaning did (Problem 4).
 """
 
+import argparse
 import base64
 import hashlib
 import io
 import json
+import subprocess
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -103,7 +110,9 @@ def check_for_repeats(folders):
 
     repeats = {k: v for k, v in seen.items() if len(v) > 1}
     if not repeats:
-        good("every image is different")
+        good("no file appears twice byte for byte. Near copies (the same "
+             "picture resized or re-saved) are only found by "
+             "`python src/clean.py suspects`.")
         return
 
     crossing = [
@@ -131,77 +140,116 @@ def load_web_model():
     title("The model you exported for the web page")
     web = ROOT / "docs"
     missing = [
-        name for name in ("model.json", "weights.bin", "selftest.json", "labels.json")
+        name for name in ("model.onnx", "model.json", "selftest.json")
         if not (web / name).exists()
     ]
     if missing:
-        complain(f"docs/ is missing {', '.join(missing)}. Run src/run.py first.")
-        return None
-
-    model = json.loads((web / "model.json").read_text())
-    weights = np.frombuffer((web / "weights.bin").read_bytes(), dtype=np.float32)
-
-    if len(weights) != model["n_floats"]:
         complain(
-            f"weights.bin holds {len(weights)} numbers but model.json expects "
-            f"{model['n_floats']}. Export again."
+            f"docs/ is missing {', '.join(missing)}. "
+            "Run src/run.py and then src/export_web.py first."
         )
         return None
 
-    shape = f'{model["input"]["size"]}x{model["input"]["size"]}'
-    kind = "colour" if model["input"]["channels"] == 3 else "grayscale"
+    try:
+        import onnxruntime
+    except ImportError:
+        complain("onnxruntime is not installed. pip install -r requirements.txt")
+        return None
+
+    model = json.loads((web / "model.json").read_text())
+    try:
+        session = onnxruntime.InferenceSession(
+            str(web / "model.onnx"), providers=["CPUExecutionProvider"]
+        )
+    except Exception as error:
+        complain(f"docs/model.onnx could not be opened: {error}")
+        return None
+
+    size = (web / "model.onnx").stat().st_size / 1e6
     good(f'{len(model["labels"])} classes: {", ".join(model["labels"])}')
-    good(f"input {shape} {kind}, {model['n_floats']:,} parameters")
-    print(f"           layers: " + " -> ".join(
-        f'Linear({l["in"]}, {l["out"]})' if l["type"] == "linear" else "ReLU"
-        for l in model["layers"]
-    ))
-    return model, weights
+    good(f'model.onnx is {size:.1f} MB, {model["n_parameters"]:,} parameters')
+    shape = session.get_inputs()[0].shape
+    print(f"           input {shape}, prepared as: shorter side "
+          f'{model["input"]["resize"]}, centre {model["input"]["crop"]} x '
+          f'{model["input"]["crop"]}, mean {model["input"]["mean"]}, '
+          f'std {model["input"]["std"]}')
+    check_committed(web / "model.onnx")
+    return model, session
 
 
-def forward(model, weights, x):
-    """The same arithmetic app.js does in the browser, in numpy."""
-    values = np.asarray(x, dtype=np.float32)
-    for layer in model["layers"]:
-        if layer["type"] == "linear":
-            start, count = layer["w"]
-            weight = weights[start:start + count].reshape(layer["out"], layer["in"])
-            bias = weights[layer["b"][0]:layer["b"][0] + layer["out"]]
-            values = weight @ values + bias
-        elif layer["type"] == "relu":
-            values = np.maximum(values, 0.0)
-    return values
+def check_committed(path):
+    """Is the model file part of what you pushed? Pages can only serve that."""
+    try:
+        inside = subprocess.run(
+            ["git", "rev-parse", "--is-inside-work-tree"],
+            cwd=ROOT, capture_output=True,
+        ).returncode == 0
+        if not inside:
+            return  # not a git repository, so there is nothing to check
+        tracked = subprocess.run(
+            ["git", "ls-files", "--error-unmatch", str(path)],
+            cwd=ROOT, capture_output=True,
+        ).returncode == 0
+        changed = subprocess.run(
+            ["git", "diff", "--quiet", "HEAD", "--", str(path)],
+            cwd=ROOT, capture_output=True,
+        ).returncode != 0
+    except (OSError, subprocess.SubprocessError):
+        return  # git is not installed
+    if not tracked:
+        warn("docs/model.onnx is not committed. Your published page will not "
+             "have a model until you commit and push it.")
+    elif changed:
+        warn("docs/model.onnx has changed since your last commit. The published "
+             "page still shows the old model.")
 
 
-def prepare(path_or_image, model):
-    size = model["input"]["size"]
-    mode = "RGB" if model["input"]["channels"] == 3 else "L"
-    image = path_or_image
-    if not isinstance(image, Image.Image):
-        image = Image.open(path_or_image)
-    image = image.convert(mode).resize((size, size))
-    return np.asarray(image, dtype=np.float32).reshape(-1) / 255.0
+def forward(session, x):
+    """Run the exported network, the same file the browser runs."""
+    return session.run(None, {session.get_inputs()[0].name: x[None]})[0][0]
 
 
-def check_selftest(model, weights):
+def prepare(image, model):
+    """The steps the web page does, written again from model.json."""
+    settings = model["input"]
+    image = image.convert("RGB")
+    width, height = image.size
+    short, long = min(width, height), max(width, height)
+    new_long = int(settings["resize"] * long / short)
+    new_size = (settings["resize"], new_long) if width <= height else (new_long, settings["resize"])
+    image = image.resize(new_size, Image.BILINEAR)
+
+    crop = settings["crop"]
+    left = int(round((image.width - crop) / 2.0))
+    top = int(round((image.height - crop) / 2.0))
+    image = image.crop((left, top, left + crop, top + crop))
+
+    values = np.asarray(image, dtype=np.float32) / 255.0
+    values = (values - np.array(settings["mean"], dtype=np.float32)) / np.array(
+        settings["std"], dtype=np.float32)
+    return values.transpose(2, 0, 1).astype(np.float32)
+
+
+def check_selftest(model, session):
     title("Does the exported model give the answers Python gave?")
     cases = json.loads((ROOT / "docs" / "selftest.json").read_text())["cases"]
     worst = 0.0
     for case in cases:
         image = Image.open(io.BytesIO(base64.b64decode(case["png"])))
-        got = forward(model, weights, prepare(image, model))
+        got = forward(session, prepare(image, model))
         worst = max(worst, float(np.abs(got - np.array(case["logits"])).max()))
 
     if worst < 0.02:
         good(f"yes, they agree (largest gap {worst:.4f})")
     else:
         complain(
-            f"no, they differ by {worst:.3f}. The web page will be wrong too. "
-            "Export again after training."
+            f"no, they differ by {worst:.3f}. The page prepares a photo the way "
+            "model.json says, and your prepare_image did something else. The "
+            "web page will be wrong too."
         )
 
 
-def check_my_photos(model, weights, folder):
+def check_my_photos(model, session, folder):
     title(f"Your own photos  ({folder})")
     folder = Path(folder)
     if not folder.exists():
@@ -231,7 +279,7 @@ def check_my_photos(model, weights, folder):
 
         for path in files:
             try:
-                logits = forward(model, weights, prepare(path, model))
+                logits = forward(session, prepare(Image.open(path), model))
             except Exception as error:
                 complain(f"could not read {path}: {error}")
                 continue
@@ -270,7 +318,67 @@ def check_my_photos(model, weights, folder):
 # ---------------------------------------------------------------------------
 
 
+IMAGENET_INPUT = {"resize": 256, "crop": 224,
+                  "mean": [0.485, 0.456, 0.406], "std": [0.229, 0.224, 0.225]}
+
+
+def compare_on_my_photos(tags, folder):
+    """Measure several saved runs on the same photos of yours.
+
+    Cleaning data/clean changes the test set as well as the training set, so
+    the test accuracy before and after cleaning is measured on different
+    images. Your own photos stay the same, so they are a fair comparison.
+    """
+    import torch
+
+    title(f"Your saved runs on your own photos  ({folder})")
+    folder = Path(folder)
+    if not folder.exists():
+        complain(f"{folder} does not exist")
+        return
+    settings_input = {"input": IMAGENET_INPUT}
+
+    print(f"  {'run':16s} {'test accuracy':>14s} {'your photos':>12s}")
+    for tag in tags:
+        model_path = ROOT / "results" / f"{tag}_model.pt"
+        settings_path = ROOT / "results" / f"{tag}_settings.json"
+        if not model_path.exists() or not settings_path.exists():
+            complain(f"results/{tag}_model.pt is missing. Run src/run.py --tag {tag}")
+            continue
+        settings = json.loads(settings_path.read_text())
+        labels = settings["class_names"]
+        model = torch.load(model_path, map_location="cpu", weights_only=False).eval()
+
+        right = total = 0
+        for class_dir in sorted(d for d in folder.iterdir() if d.is_dir()):
+            if class_dir.name not in labels:
+                continue
+            for path in image_files(class_dir):
+                try:
+                    x = prepare(Image.open(path), settings_input)
+                except Exception:
+                    continue
+                with torch.no_grad():
+                    guess = int(model(torch.from_numpy(x[None])).argmax())
+                right += guess == labels.index(class_dir.name)
+                total += 1
+        if total:
+            print(f"  {tag:16s} {settings['test_accuracy']:14.1%} "
+                  f"{right / total:12.1%}   ({right}/{total})")
+
+
+# ---------------------------------------------------------------------------
+
+
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--compare", nargs="+", metavar="TAG",
+        help="also measure these saved runs on your own photos, "
+             "for example --compare run clean",
+    )
+    args = parser.parse_args()
+
     print("MAS1004 Assignment 1, checking your work")
 
     check_folder("Training images", ROOT / "data" / "clean", least_per_class=50)
@@ -279,9 +387,11 @@ def main():
 
     loaded = load_web_model()
     if loaded:
-        model, weights = loaded
-        check_selftest(model, weights)
-        check_my_photos(model, weights, ROOT / "data" / "my_photos")
+        model, session = loaded
+        check_selftest(model, session)
+        check_my_photos(model, session, ROOT / "data" / "my_photos")
+    if args.compare:
+        compare_on_my_photos(args.compare, ROOT / "data" / "my_photos")
 
     title("Summary")
     if problems:

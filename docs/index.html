@@ -58,7 +58,7 @@
     max-width: 100%;
   }
   #drawPad { touch-action: none; cursor: crosshair; }
-  .shot { width: 96px; height: 96px; image-rendering: pixelated;
+  .shot { width: 160px; height: 160px;
           border: 1px solid var(--line); border-radius: 6px; }
   .row { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
   .name { width: 34%; font-size: .9rem; overflow: hidden;
@@ -73,6 +73,7 @@
   .hint { color: var(--muted); font-size: .88rem; }
   footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
            color: var(--muted); font-size: .85rem; }
+  footer a { color: inherit; }
   code { background: var(--panel); padding: 1px 5px; border-radius: 4px;
          font-size: .88em; }
 </style>
@@ -121,7 +122,7 @@
     <div class="stage">
       <div>
         <div class="hint">What the model actually sees</div>
-        <canvas id="small" class="shot" width="96" height="96"></canvas>
+        <canvas id="small" class="shot" width="224" height="224"></canvas>
       </div>
       <div style="flex:1; min-width:260px">
         <div id="bars"></div>
@@ -130,12 +131,15 @@
   </section>
 
   <footer>
-    <p>Built for MAS1004 Data &amp; AI, Sogang University. The model is a small
-      neural network trained on images collected by the student. It runs in
-      JavaScript inside this page, so it works with no server at all. The
-      forward pass is in <code>app.js</code> and is about forty lines long.</p>
+    <p>Built for MAS1004 Data &amp; AI, Sogang University. The model is
+      ResNet18, trained first on ImageNet and then on images collected by the
+      student. It runs inside this page with
+      <a href="https://onnxruntime.ai/docs/tutorials/web/">ONNX Runtime Web</a>,
+      so it works with no server at all and no picture leaves your device.
+      How a picture is prepared for it is in <code>app.js</code>.</p>
   </footer>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/ort.wasm.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -55,6 +55,32 @@ def test_predict_logits_works_in_batches(known_model):
     assert predict_logits(known_model, X, batch_size=64).shape == (500, 3)
 
 
+def test_predict_logits_takes_images():
+    model = nn.Sequential(
+        nn.Conv2d(3, 4, 3), nn.ReLU(), nn.AdaptiveAvgPool2d(1), nn.Flatten(),
+        nn.Linear(4, 2),
+    )
+    X = np.random.default_rng(0).random((7, 3, 16, 16)).astype(np.float32)
+    logits = predict_logits(model, X, batch_size=3)
+    assert isinstance(logits, np.ndarray) and logits.shape == (7, 2), (
+        "Seven images should give a (7, 2) numpy array."
+    )
+
+
+def test_predict_logits_uses_eval_mode():
+    torch.manual_seed(0)
+    model = nn.Sequential(nn.Linear(3, 64), nn.Dropout(0.5), nn.Linear(64, 2))
+    model.train()
+    X = np.random.default_rng(0).random((20, 3)).astype(np.float32)
+    first = predict_logits(model, X)
+    second = predict_logits(model, X)
+    assert np.allclose(first, second), (
+        "Two calls on the same rows gave different answers, so the model was "
+        "still in training mode. Call model.eval() first. ResNet's BatchNorm "
+        "layers give wrong answers in training mode."
+    )
+
+
 def test_accuracy(known_model, known_data):
     X, y, _ = known_data
     assert accuracy(known_model, X, y) == pytest.approx(3 / 5), (

@@ -18,8 +18,9 @@ def image_folder(tmp_path):
     """A small folder of images that is messy in the same ways yours will be.
 
     Different sizes, different shapes, a PNG with transparency, an image that
-    is already grayscale, a file that is not an image at all, and a stray text
-    file. If load_folder survives this, it will survive your download folder.
+    is already grayscale, an extension in capitals, a file that is not an image
+    at all, and a stray text file. If load_folder survives this, it will
+    survive your download folder.
     """
     rng = np.random.default_rng(0)
     root = tmp_path / "images"
@@ -39,6 +40,8 @@ def image_folder(tmp_path):
                 Image.fromarray(base).convert("RGBA").save(folder / "with_alpha.png")
             elif number == 1:
                 Image.fromarray(base).convert("L").save(folder / "already_gray.png")
+            elif number == 2 and index == 1:
+                Image.fromarray(base).save(folder / "CAPITALS.JPG", "JPEG")
             else:
                 Image.fromarray(base).save(folder / f"{number:03d}.jpg")
 

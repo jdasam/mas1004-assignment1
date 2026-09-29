@@ -1,107 +1,106 @@
 // The whole demo. It loads the model your export script wrote, and runs it
-// right here in the browser. There is no server and nothing is uploaded.
+// right here in the browser with ONNX Runtime Web. There is no server and
+// nothing is uploaded.
 //
-// You do not need to change this file. Read it if you are curious: the
-// forward() function below is the same matrix multiply you did by hand in
-// class, written out in JavaScript.
+// You do not need to change this file. Read toInput() if you are curious: it
+// prepares a picture with the same six steps as prepare_image in src/data.py.
 
 let model = null;      // the contents of model.json
-let weights = null;    // every number in the model, as one long Float32Array
+let session = null;    // the network from model.onnx, ready to run
 
 const $ = (id) => document.getElementById(id);
+
+// GitHub Pages cannot send the headers that multi-threaded WebAssembly needs,
+// so run on one thread. For one picture at a time that is fast enough.
+ort.env.wasm.numThreads = 1;
 
 // ---------------------------------------------------------------------------
 // The model itself
 // ---------------------------------------------------------------------------
 
-function forward(input) {
-  let values = input;
-  for (const layer of model.layers) {
-    if (layer.type === "linear") {
-      const weightStart = layer.w[0];
-      const biasStart = layer.b[0];
-      const output = new Float32Array(layer.out);
-      for (let o = 0; o < layer.out; o++) {
-        let sum = weights[biasStart + o];
-        const rowStart = weightStart + o * layer.in;
-        for (let i = 0; i < layer.in; i++) {
-          sum += weights[rowStart + i] * values[i];
-        }
-        output[o] = sum;
-      }
-      values = output;
-    } else if (layer.type === "relu") {
-      const output = new Float32Array(values.length);
-      for (let i = 0; i < values.length; i++) {
-        output[i] = values[i] > 0 ? values[i] : 0;
-      }
-      values = output;
-    }
-  }
-  return values;
+async function forward(input) {
+  const crop = model.input.crop;
+  const tensor = new ort.Tensor("float32", input, [1, 3, crop, crop]);
+  const outputs = await session.run({ [model.input.name]: tensor });
+  return Array.from(outputs[model.output.name].data);
 }
 
 function softmax(logits) {
   const biggest = Math.max(...logits);
-  const exponentials = Array.from(logits, (v) => Math.exp(v - biggest));
+  const exponentials = logits.map((v) => Math.exp(v - biggest));
   const total = exponentials.reduce((a, b) => a + b, 0);
   return exponentials.map((v) => v / total);
 }
 
 // ---------------------------------------------------------------------------
-// Preparing an image, the same way Python prepared the training images
+// Preparing a picture, the same way prepare_image did in Python
 // ---------------------------------------------------------------------------
 
 const scratch = document.createElement("canvas");
 
-function shrinkOnto(source, size) {
-  // Going straight from a 640x480 camera frame to 32x32 in one step throws
-  // away almost every pixel. Halving repeatedly keeps much more, and lands
-  // closer to what Pillow does in Python.
+function resizeShorterSide(source, target) {
+  // Step 2: the shorter side becomes `target` and the shape is kept.
+  // Going from a 4000 pixel photo to 256 in one step throws away almost every
+  // pixel. Halving repeatedly keeps much more, and lands closer to what
+  // Pillow does in Python.
   let width = source.videoWidth || source.naturalWidth || source.width;
   let height = source.videoHeight || source.naturalHeight || source.height;
+  const scale = target / Math.min(width, height);
+  const finalWidth = width <= height ? target : Math.floor(width * scale);
+  const finalHeight = width <= height ? Math.floor(height * scale) : target;
 
   let stage = document.createElement("canvas");
   stage.width = width;
   stage.height = height;
   stage.getContext("2d").drawImage(source, 0, 0, width, height);
 
-  while (width > size * 2 && height > size * 2) {
+  while (width >= finalWidth * 2 && height >= finalHeight * 2) {
     const next = document.createElement("canvas");
-    next.width = Math.max(size, Math.floor(width / 2));
-    next.height = Math.max(size, Math.floor(height / 2));
+    next.width = Math.floor(width / 2);
+    next.height = Math.floor(height / 2);
     const context = next.getContext("2d");
     context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
     context.drawImage(stage, 0, 0, next.width, next.height);
     stage = next;
     width = next.width;
     height = next.height;
   }
 
-  scratch.width = size;
-  scratch.height = size;
-  const context = scratch.getContext("2d", { willReadFrequently: true });
+  if (width === finalWidth && height === finalHeight) return stage;
+  const last = document.createElement("canvas");
+  last.width = finalWidth;
+  last.height = finalHeight;
+  const context = last.getContext("2d");
   context.imageSmoothingEnabled = true;
-  context.clearRect(0, 0, size, size);
-  context.drawImage(stage, 0, 0, size, size);
-  return context.getImageData(0, 0, size, size);
+  context.imageSmoothingQuality = "high";
+  context.drawImage(stage, 0, 0, finalWidth, finalHeight);
+  return last;
 }
 
 function toInput(source) {
-  const size = model.input.size;
-  const channels = model.input.channels;
-  const pixels = shrinkOnto(source, size).data;
+  const { resize, crop, mean, std } = model.input;
 
-  const values = new Float32Array(size * size * channels);
-  for (let p = 0, slot = 0; p < size * size; p++) {
-    const r = pixels[p * 4], g = pixels[p * 4 + 1], b = pixels[p * 4 + 2];
-    if (channels === 3) {
-      values[slot++] = r / 255;
-      values[slot++] = g / 255;
-      values[slot++] = b / 255;
-    } else {
-      // Exactly Pillow's convert("L").
-      values[slot++] = Math.round(0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  // Step 1 happens by itself: a canvas always holds red, green, blue.
+  const resized = resizeShorterSide(source, resize);
+
+  // Step 3: cut out the crop x crop square in the middle.
+  const left = Math.round((resized.width - crop) / 2);
+  const top = Math.round((resized.height - crop) / 2);
+  scratch.width = crop;
+  scratch.height = crop;
+  const context = scratch.getContext("2d", { willReadFrequently: true });
+  context.clearRect(0, 0, crop, crop);
+  context.drawImage(resized, left, top, crop, crop, 0, 0, crop, crop);
+  const pixels = context.getImageData(0, 0, crop, crop).data;
+
+  // Steps 4, 5 and 6: divide by 255, subtract the mean and divide by the
+  // standard deviation of each channel, and put the channels first.
+  const area = crop * crop;
+  const values = new Float32Array(3 * area);
+  for (let p = 0; p < area; p++) {
+    for (let c = 0; c < 3; c++) {
+      values[c * area + p] = (pixels[p * 4 + c] / 255 - mean[c]) / std[c];
     }
   }
   return values;
@@ -110,7 +109,6 @@ function toInput(source) {
 function showWhatItSees() {
   const target = $("small");
   const context = target.getContext("2d");
-  context.imageSmoothingEnabled = false;
   context.clearRect(0, 0, target.width, target.height);
   context.drawImage(scratch, 0, 0, target.width, target.height);
 }
@@ -132,11 +130,30 @@ function drawBars(probabilities) {
     </div>`).join("");
 }
 
-function classify(source) {
-  if (!model) return;
-  const probabilities = softmax(forward(toInput(source)));
-  showWhatItSees();
-  drawBars(probabilities);
+// Running the network takes a moment. While it runs, only the newest picture
+// waits its turn, so the webcam never builds up a queue.
+let busy = false;
+let waiting = null;
+
+async function classify(source) {
+  if (!session) return;
+  if (busy) {
+    waiting = source;
+    return;
+  }
+  busy = true;
+  try {
+    const input = toInput(source);
+    showWhatItSees();
+    drawBars(softmax(await forward(input)));
+  } finally {
+    busy = false;
+  }
+  if (waiting) {
+    const next = waiting;
+    waiting = null;
+    classify(next);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -156,7 +173,7 @@ async function runSelfTest(cases) {
   let worst = 0;
   for (const test of cases) {
     const image = await loadImage("data:image/png;base64," + test.png);
-    const got = forward(toInput(image));
+    const got = await forward(toInput(image));
     for (let i = 0; i < got.length; i++) {
       worst = Math.max(worst, Math.abs(got[i] - test.logits[i]));
     }
@@ -171,8 +188,9 @@ async function runSelfTest(cases) {
     badge.className = "badge bad";
     badge.textContent =
       `self test FAILED: the browser and Python disagree by ${worst.toFixed(3)}. ` +
-      `The page is preparing images differently from the way you prepared them ` +
-      `for training. Check image_size and color.`;
+      `The page prepares a picture the way model.json says, and your ` +
+      `prepare_image did something else. Every answer on this page is wrong ` +
+      `until you fix prepare_image, train again and export again.`;
   }
 }
 
@@ -201,10 +219,10 @@ $("camStart").onclick = async () => {
     cameraRunning = true;
     $("camStart").disabled = true;
     $("camStart").textContent = "Camera is on";
-    const tick = () => {
+    const tick = async () => {
       if (!cameraRunning) return;
-      classify(video);
-      setTimeout(() => requestAnimationFrame(tick), 120);
+      await classify(video);
+      setTimeout(() => requestAnimationFrame(tick), 150);
     };
     tick();
   } catch (error) {
@@ -283,29 +301,21 @@ $("clearPad").onclick = () => { clearPad(); };
 
 async function start() {
   try {
-    const [modelResponse, weightsResponse] = await Promise.all([
-      fetch("model.json"),
-      fetch("weights.bin"),
-    ]);
-    if (!modelResponse.ok || !weightsResponse.ok) throw new Error("not found");
-
+    const modelResponse = await fetch("model.json");
+    if (!modelResponse.ok) throw new Error("model.json not found");
     model = await modelResponse.json();
-    weights = new Float32Array(await weightsResponse.arrayBuffer());
 
-    if (weights.length !== model.n_floats) {
-      throw new Error(
-        `weights.bin holds ${weights.length} numbers but model.json expects ` +
-        `${model.n_floats}. Run the export script again.`
-      );
-    }
+    $("subtitle").textContent = "Loading the network, about 45 MB. The first time takes a few seconds.";
+    session = await ort.InferenceSession.create("model.onnx", {
+      executionProviders: ["wasm"],
+    });
 
     document.title = model.labels.join(" / ");
     $("title").textContent = model.labels.join("  ·  ");
     $("subtitle").textContent =
-      `${model.labels.length} classes, ` +
-      `${model.input.size}x${model.input.size} ` +
-      `${model.input.channels === 3 ? "colour" : "grayscale"} input, ` +
-      `${model.n_floats.toLocaleString()} parameters.`;
+      `${model.labels.length} classes, ResNet18 on ` +
+      `${model.input.crop}x${model.input.crop} colour input, ` +
+      `${model.n_parameters.toLocaleString()} parameters.`;
 
     drawBars(model.labels.map(() => 0));
 
@@ -319,9 +329,10 @@ async function start() {
     $("subtitle").textContent = "Could not load the model.";
     $("selftest").className = "badge bad";
     $("selftest").textContent =
-      "Could not read model.json and weights.bin. Either you have not trained " +
-      "a model yet, in which case run `python src/run.py` first, or you opened " +
-      "this file by double clicking it, which browsers block. Run " +
+      "Could not load model.json and model.onnx. Either you have not exported " +
+      "a model yet, in which case run `python src/run.py` and then " +
+      "`python src/export_web.py --tag run`, or you opened this file by " +
+      "double clicking it, which browsers block. Run " +
       "`python -m http.server -d docs 8000` and open http://localhost:8000. " +
       "(" + error.message + ")";
   }

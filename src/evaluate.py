@@ -17,17 +17,20 @@ import torch
 from PIL import Image
 
 
-def predict_logits(model, X, batch_size=256):
+def predict_logits(model, X, batch_size=64):
     """Run the model over X and return its raw outputs.
 
     Arguments
-        X  np.float32 (N, D)
+        X  np.float32 (N, ...), for example (N, 3, 224, 224)
 
-    Returns np.float32 (N, C), where C is the number of classes. These are raw
-    outputs, not probabilities. Do not apply softmax here.
+    Returns np.float32 (N, C), where C is the number of classes, as a numpy
+    array in ordinary memory. These are raw outputs, not probabilities. Do not
+    apply softmax here.
 
-    Put the model in eval mode and do not compute gradients. Work in batches so
-    that a large test set does not run you out of memory.
+    Put the model in eval mode and do not compute gradients. The model may be
+    on a GPU: send each batch to the device the model's parameters are on,
+    next(model.parameters()).device, and bring the answers back with .cpu().
+    Work in batches so that a large test set does not run you out of memory.
     """
     raise NotImplementedError("Problem 3: fill in predict_logits")
 
