@@ -26,7 +26,8 @@ Not a coding step. Write down 3 to 5 categories and one sentence each on why
 you chose them. Keep the sentences. They go in your report.
 
 Check: you can say out loud what visible difference the model is supposed to
-find between them, and you can photograph all of them yourself.
+find between them, and you know where you will get images of them that cannot
+be among your downloads (Step 4).
 
 ## Step 2. Download the images
 
@@ -51,15 +52,22 @@ came, so that Problem 4 has something to compare against.
 
 Check: you can name three kinds of junk that came back.
 
-## Step 4. Take your own photographs
+## Step 4. Collect images from a new source
 
-At least five per category, into `data/my_photos/<category>/`, with the same
-folder names as `data/clean`. Take them in different places and different
-light. If you take them all on the same desk in one evening, Problems 4 and 5
-have nothing to say.
+At least five per category, into `data/new_images/<category>/`, with the same
+folder names as `data/clean`. They must come from a source you can be sure is
+not in your downloads: your own photos, a friend's photos, frames from a video
+you recorded. Not another web search. If you take photos yourself, take them in
+different places and different light. If you take them all on the same desk in
+one evening, Problems 4 and 5 have nothing to say.
 
-Check: every category has a folder in `data/my_photos/` with at least five
-photos in it.
+```
+python src/clean.py overlap
+```
+
+Check: every category has a folder in `data/new_images/` with at least five
+images in it, `clean.py overlap` finds no near copies, and you can say in one
+sentence why none of them can be among your downloads.
 
 ## Step 5. Write `prepare_image`
 
@@ -178,7 +186,7 @@ python src/check.py --compare run clean
 ```
 
 Check: you have the test accuracy before and after, and the accuracy on your
-own photos before and after, and you can say why the second pair is the fairer
+new images before and after, and you can say why the second pair is the fairer
 comparison.
 
 ## Step 14. Write `worst_examples` and look at the mistakes
@@ -199,7 +207,7 @@ python src/check.py
 ```
 
 Check: `check.py` says the exported model agrees with Python, and reports an
-accuracy on your own photos.
+accuracy on your new images.
 
 ## Step 16. Open the demo on your own machine
 

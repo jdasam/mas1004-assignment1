@@ -11,7 +11,7 @@ Paste the whole output into your report.
 
     python src/check.py --compare run clean
 
-also measures the models saved by those runs on your own photos, which is the
+also measures the models saved by those runs on your new images, which is the
 fair way to see what cleaning did (Problem 4).
 """
 
@@ -112,7 +112,7 @@ def check_for_repeats(folders):
     if not repeats:
         good("no file appears twice byte for byte. Near copies (the same "
              "picture resized or re-saved) are only found by "
-             "`python src/clean.py suspects`.")
+             "`python src/clean.py suspects` and `python src/clean.py overlap`.")
         return
 
     crossing = [
@@ -123,8 +123,8 @@ def check_for_repeats(folders):
     if crossing:
         complain(
             f"{len(crossing)} image(s) appear in more than one place, including "
-            "across different classes or across your training and your own "
-            "photos. Test accuracy measured on an image the model trained on "
+            "across different classes or across your downloads and your new "
+            "images. Test accuracy measured on an image the model trained on "
             "means nothing."
         )
         for group in crossing[:3]:
@@ -249,13 +249,24 @@ def check_selftest(model, session):
         )
 
 
-def check_my_photos(model, session, folder):
-    title(f"Your own photos  ({folder})")
+def new_images_folder():
+    """data/new_images, or data/my_photos, its name before 29 September."""
+    new = ROOT / "data" / "new_images"
+    old = ROOT / "data" / "my_photos"
+    if not new.exists() and old.exists():
+        warn("data/my_photos is the old name of this folder. Rename it to "
+             "data/new_images.")
+        return old
+    return new
+
+
+def check_new_images(model, session, folder):
+    title(f"Your images from a new source  ({folder})")
     folder = Path(folder)
     if not folder.exists():
         complain(
-            f"{folder} does not exist. Problem 5 asks for at least 5 photos per "
-            "class that you took yourself."
+            f"{folder} does not exist. Problem 5 asks for at least 5 images per "
+            "class from a source you are sure is not in your downloads."
         )
         return
 
@@ -275,7 +286,7 @@ def check_my_photos(model, session, folder):
         true_index = labels.index(class_dir.name)
         files = image_files(class_dir)
         if len(files) < 5:
-            warn(f'"{class_dir.name}" has only {len(files)} of your own photos')
+            warn(f'"{class_dir.name}" has only {len(files)} new images')
 
         for path in files:
             try:
@@ -298,10 +309,10 @@ def check_my_photos(model, session, folder):
                 )
 
     if total == 0:
-        complain("no readable photos found")
+        complain("no readable images found")
         return
 
-    print(f"\n  accuracy on your own photos: {right}/{total} = {right / total:.1%}")
+    print(f"\n  accuracy on your new images: {right}/{total} = {right / total:.1%}")
     print("\n  rows are what it really is, columns are what the model said")
     width = max(len(name) for name in labels) + 2
     print(" " * (width + 4) + "".join(f"{name[:8]:>9s}" for name in labels))
@@ -322,23 +333,23 @@ IMAGENET_INPUT = {"resize": 256, "crop": 224,
                   "mean": [0.485, 0.456, 0.406], "std": [0.229, 0.224, 0.225]}
 
 
-def compare_on_my_photos(tags, folder):
-    """Measure several saved runs on the same photos of yours.
+def compare_on_new_images(tags, folder):
+    """Measure several saved runs on the same new images.
 
     Cleaning data/clean changes the test set as well as the training set, so
     the test accuracy before and after cleaning is measured on different
-    images. Your own photos stay the same, so they are a fair comparison.
+    images. Your new images stay the same, so they are a fair comparison.
     """
     import torch
 
-    title(f"Your saved runs on your own photos  ({folder})")
+    title(f"Your saved runs on your new images  ({folder})")
     folder = Path(folder)
     if not folder.exists():
         complain(f"{folder} does not exist")
         return
     settings_input = {"input": IMAGENET_INPUT}
 
-    print(f"  {'run':16s} {'test accuracy':>14s} {'your photos':>12s}")
+    print(f"  {'run':16s} {'test accuracy':>14s} {'new images':>12s}")
     for tag in tags:
         model_path = ROOT / "results" / f"{tag}_model.pt"
         settings_path = ROOT / "results" / f"{tag}_settings.json"
@@ -374,7 +385,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--compare", nargs="+", metavar="TAG",
-        help="also measure these saved runs on your own photos, "
+        help="also measure these saved runs on your new images, "
              "for example --compare run clean",
     )
     args = parser.parse_args()
@@ -382,16 +393,17 @@ def main():
     print("MAS1004 Assignment 1, checking your work")
 
     check_folder("Training images", ROOT / "data" / "clean", least_per_class=50)
-    check_folder("Your own photos", ROOT / "data" / "my_photos", least_per_class=5)
-    check_for_repeats([ROOT / "data" / "clean", ROOT / "data" / "my_photos"])
+    new_images = new_images_folder()
+    check_folder("Your images from a new source", new_images, least_per_class=5)
+    check_for_repeats([ROOT / "data" / "clean", new_images])
 
     loaded = load_web_model()
     if loaded:
         model, session = loaded
         check_selftest(model, session)
-        check_my_photos(model, session, ROOT / "data" / "my_photos")
+        check_new_images(model, session, new_images)
     if args.compare:
-        compare_on_my_photos(args.compare, ROOT / "data" / "my_photos")
+        compare_on_new_images(args.compare, new_images)
 
     title("Summary")
     if problems:

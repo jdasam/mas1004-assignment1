@@ -102,7 +102,8 @@ This downloads images into `data/raw/`. Then copy `data/raw` to `data/clean`
 and work on the copy, so you always have the original to go back to.
 
 Two things to think about when you choose. In Problem 5 you test the model on
-photographs you take yourself, so choose things you can actually photograph.
+images from a source that cannot overlap with your downloads, such as your own
+photos, so choose things you can find such images of.
 And the model can only use what is visible in the picture: an expensive wine
 glass and a cheap one that look the same cannot be told apart by any model.
 Because you start from a network that has already seen 1.2 million photos,
@@ -141,8 +142,8 @@ memory. This is the single most common mistake in this assignment and it always
 makes your numbers look better than they are.
 
 Write this down:
-- One of your photos next to what `prepare_image` made of it. What was cut
-  off? Find a photo where the crop cut off part of the thing you care about.
+- One of your images next to what `prepare_image` made of it. What was cut
+  off? Find an image where the crop cut off part of the thing you care about.
 
 ## Problem 3. Train it and report the first result
 
@@ -266,9 +267,8 @@ python src/check.py --compare run clean
 Cleaning changed your test set as well as your training set, because some of
 the junk you removed was in the test set. So the test accuracy before and after
 cleaning is measured on different images, and the two numbers cannot simply be
-compared. Your own photographs from Problem 5 did not change, so
-`--compare` measures both saved models on them. Take your photographs before
-you get to this step.
+compared. Your new images from Problem 5 did not change, so `--compare`
+measures both saved models on them. Collect them before you get to this step.
 
 Write this down:
 - Your rule, in one or two sentences, as you wrote it before you started.
@@ -278,41 +278,66 @@ Write this down:
 - Of the first 20 suspects in each class, how many did you remove? Did the
   suspects include junk you had missed when you looked yourself? Did you find
   junk that it did not list?
-- The test accuracy before and after, and the accuracy on your own photos
+- The test accuracy before and after, and the accuracy on your new images
   before and after, from `--compare`. If a number went down, say so and think
   about why. That happens, and an honest explanation is worth more than a good
   number.
 
-## Problem 5. Test it on photographs you took yourself
+## Problem 5. Test it on images from a new source
 
-Everything so far used images from the internet. Now take your own.
+Everything so far used images from one search. Your test set came from the
+same download as your training set, so it shares its habits: the same kind of
+product photo, the same white backgrounds, sometimes the very same picture
+twice. Now test the model on images from somewhere else.
 
-Take these early, because Problem 4 uses them too.
+Collect at least 5 images per category from a source that you can be sure is
+not in your downloaded images, and put them in `data/new_images/<category>/`,
+using exactly the category names from your training folders. Collect them
+early, because Problem 4 uses them too.
 
-Take at least 5 photographs per category yourself and put them in
-`data/my_photos/<category>/`, using exactly the category names from your
-training folders. Write `worst_examples` in `src/evaluate.py`, then put your
-cleaned model on your page and run the checker:
+What counts as such a source is up to you, as long as you can say why none of
+its images can be among your downloads. Some that work:
+- photographs you take yourself, which is the simplest
+- photographs a friend took and sent you
+- frames from a video you recorded
+- photos from your own phone's gallery
+
+Another search engine, or another search phrase, does not work. The same
+product photos are copied onto every shopping site, so a second search brings
+back many of the pictures you already have. Check with:
+
+```
+python src/clean.py overlap
+```
+
+It compares every new image with every image you downloaded and draws the near
+copies into `results/cleaning/overlap.png`. Any it finds are not new: take
+them out of `data/new_images`, and think about whether the rest of that source
+is really separate.
+
+Then write `worst_examples` in `src/evaluate.py`, put your cleaned model on
+your page, and run the checker:
 
 ```
 python src/export_web.py --tag clean
 python src/check.py
 ```
 
-`check.py` measures the model that is now on your page on your own
-photographs, and prints a confusion matrix and the mistakes it was most
-confident about.
+`check.py` measures the model that is now on your page on your new images, and
+prints a confusion matrix and the mistakes it was most confident about.
 
 Your accuracy here will probably be worse than your test accuracy from
 Problem 3. That is not a mistake you made. Explaining it is the assignment. If
-it is not worse, the photos it does get wrong are still the ones to explain.
+it is not worse, the images it does get wrong are still the ones to explain.
 
 Write this down:
-- The accuracy on internet images and the accuracy on your own photographs,
+- Where your new images came from, and why you are sure none of them are among
+  your downloads. The output of `python src/clean.py overlap`.
+- The accuracy on your downloaded test set and the accuracy on your new images,
   side by side.
 - Five mistakes it was confident about, with the pictures. For each one, what
-  in that photograph do you think pushed it the wrong way?
-- What is different about your photographs? Background, lighting, angle,
+  in that image do you think pushed it the wrong way?
+- What is different about your new images? Background, lighting, angle,
   distance, what else is in the frame?
 
 ## Problem 6. Put the demo on the web
@@ -360,8 +385,8 @@ Write this down:
 2. The address of your code repository.
 3. The short report.
 4. The long report.
-5. `data/my_photos/` as a zip. Not the downloaded images, only your own
-   photographs.
+5. `data/new_images/` as a zip. Not the downloaded images, only the ones from
+   your new source.
 
 ## The short report
 
@@ -375,8 +400,8 @@ counts for anything, and what you actually think counts for everything.
 Four questions:
 
 1. What does your model tell apart, and why did you pick that?
-2. The worst mistake it makes. Which photograph, what did it answer, and what
-   do you think made it answer that?
+2. The worst mistake it makes. Which image, what did it answer, and what do
+   you think made it answer that?
 3. One thing your coding agent got wrong. What did it claim, what was actually
    true, and what made you look?
 4. If you started again tomorrow, what would you do differently?
@@ -404,7 +429,9 @@ It holds:
 - The complete output of `python src/check.py`
 - Your cleaning rule, the output of `python src/clean.py count`, and the
   suspects and near copies you removed or kept
-- The accuracy on internet images and the accuracy on your own photographs,
+- Where your new images came from, and the output of
+  `python src/clean.py overlap`
+- The accuracy on your downloaded test set and the accuracy on your new images,
   next to each other
 
 ## How this is graded

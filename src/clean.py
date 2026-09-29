@@ -34,6 +34,12 @@ assignment that matters most.
     python src/clean.py count
         How many images each class had, how many you removed, and for what
         reasons. This is the table your report asks for.
+
+    python src/clean.py overlap
+        Problem 5. Compares every image in data/new_images with every image
+        you downloaded, in data/raw and data/clean, and draws the pairs that are
+        near copies into results/cleaning/overlap.png. A new image that is a
+        copy of a downloaded one is not new, so take it out of data/new_images.
 """
 
 import argparse
@@ -51,6 +57,7 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).resolve().parents[1]
 CLEAN = ROOT / "data" / "clean"
 RAW = ROOT / "data" / "raw"
+NEW = ROOT / "data" / "new_images"
 REMOVED = ROOT / "data" / "removed"
 OUT = ROOT / "results" / "cleaning"
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
@@ -354,6 +361,55 @@ def count(args):
           "Their reasons are not recorded.")
 
 
+def overlap(args):
+    new = [p for paths in images_by_class(NEW).values() for p in paths]
+    if not new:
+        sys.exit(f"{NEW} has no images in class folders yet.")
+    seen, downloaded = set(), []
+    for folder in (RAW, CLEAN, REMOVED):
+        for paths in images_by_class(folder).values():
+            for path in paths:
+                digest = hashlib.md5(path.read_bytes()).hexdigest()
+                if digest not in seen:
+                    seen.add(digest)
+                    downloaded.append(path)
+
+    features = describe(new + downloaded)
+    readable = ~np.isnan(features).any(axis=1)
+    unit = features / np.linalg.norm(features, axis=1, keepdims=True)
+    similarity = unit[:len(new)] @ unit[len(new):].T
+    similarity[~readable[:len(new)]] = 0
+    similarity[:, ~readable[len(new):]] = 0
+
+    closest = similarity.argmax(1)
+    scores = similarity[np.arange(len(new)), closest]
+    copies = [i for i in np.argsort(-scores) if scores[i] > SAME]
+
+    items = []
+    for i in copies[:PER_SHEET // 2]:
+        j = closest[i]
+        items.append((new[i], [f"{new[i].parent.name}/{new[i].name}", "new"]))
+        items.append((downloaded[j], [f"{downloaded[j].parent.name}/{downloaded[j].name}",
+                                      f"downloaded, {scores[i]:.2f}"]))
+    if (OUT / "overlap.png").exists():
+        (OUT / "overlap.png").unlink()
+    if items:
+        verb = "is a near copy" if len(copies) == 1 else "are near copies"
+        out = draw_sheet(items, f"{len(copies)} of your new images {verb} of "
+                                f"downloaded ones", OUT / "overlap.png")
+        print(f"wrote {out.relative_to(ROOT)}")
+        for i in copies:
+            print(f"  data/new_images/{new[i].parent.name}/{new[i].name}  looks like  "
+                  f"{downloaded[closest[i]].relative_to(ROOT)}  ({scores[i]:.2f})")
+        print("\nThese are not new. Take them out of data/new_images, and think "
+              "about whether the rest of that source is really separate.")
+    else:
+        print(f"none of your {len(new)} new images is a near copy of any of the "
+              f"{len(downloaded)} images you downloaded")
+    print(f"\nthe closest any new image comes to a downloaded one: "
+          f"{scores.max():.2f} (near copies are above {SAME})")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     commands = parser.add_subparsers(dest="command", required=True)
@@ -364,8 +420,11 @@ def main():
     removing.add_argument("--reason", required=True,
                           help="which part of your rule it breaks")
     commands.add_parser("count", help="how many you removed, by class and by reason")
+    commands.add_parser("overlap",
+                        help="check that data/new_images holds no copy of a downloaded image")
     args = parser.parse_args()
-    {"look": look, "suspects": suspects, "remove": remove, "count": count}[args.command](args)
+    {"look": look, "suspects": suspects, "remove": remove, "count": count,
+     "overlap": overlap}[args.command](args)
 
 
 if __name__ == "__main__":
