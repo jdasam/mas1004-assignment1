@@ -162,12 +162,22 @@ so everything it says is wrong. Read what the badge says, and check that the
 
 ## Step 14. Publish it
 
-Ask the agent to put `docs/` on GitHub Pages. It will need you to be logged in.
-If it goes in circles for more than ten minutes, stop it and do it by hand
-through the GitHub website. Getting `gh auth login` working is not what this
-assignment is about.
+```
+git add -A
+git commit -m "trained model and demo"
+git push
+```
 
-Check: you opened the address on your phone and it worked.
+Then on the GitHub website: your repository, Settings, Pages, Source "Deploy
+from a branch", Branch `main`, Folder `/docs`, Save.
+
+Your agent can do the git part for you. If it goes in circles over `gh auth
+login` for more than ten minutes, stop it and use the website. Getting the
+command line tool authenticated is not what this assignment is about.
+
+Check: you opened the address on your phone, away from your own wifi, and it
+worked. If the page is blank, look at your repository on the GitHub website and
+see whether `docs/model.json` and `docs/weights.bin` are actually there.
 
 ## Step 15. Write the report
 

@@ -40,6 +40,20 @@ the test, repeat until it is green.
 your agent one step at a time. It is a real plan of the kind you should learn
 to write yourself, so read it before you use it.
 
+## Getting your own copy
+
+This repository is a template, so you do not fork it and you do not work in it.
+
+1. Make an account at https://github.com if you do not have one.
+2. Open https://github.com/jdasam/mas1004-assignment1
+3. Press "Use this template", then "Create a new repository".
+4. Give it a name and keep it public. Public is what makes GitHub Pages free.
+5. `git clone` your new repository onto your own machine.
+
+Everything you do from now on happens in your copy, and you hand in its
+address. Commit and push as you go. A commit you did not push has not been
+handed in.
+
 ## Setting up
 
 ```
@@ -200,11 +214,18 @@ Check the badge at the top of the page. If it is red, the page is preparing
 images differently from the way you prepared them for training, and the demo is
 lying to you. Fix that before you publish.
 
-Then publish the `docs/` folder to GitHub Pages and put the address in your
-report. Your agent can do this for you with the `gh` command line tool. If you
-get stuck, the manual route always works: make an account, make a new public
-repository, drag the files from `docs/` into the web page, then Settings, Pages,
-and choose the main branch.
+Then commit and push, and turn on GitHub Pages: your repository, Settings,
+Pages, then Source "Deploy from a branch", Branch `main`, Folder `/docs`, Save.
+Your demo appears at `https://<your name>.github.io/<your repository>/` after a
+minute or two. The first time you look it is often a 404. Wait and reload.
+
+The folder is called `docs` for exactly this reason. GitHub Pages publishes a
+folder with that name and no other configuration.
+
+Check that `docs/model.json` and `docs/weights.bin` really are in your
+repository on the GitHub website. If you only see `index.html` and `app.js`,
+you trained a model but never committed it, and your published page will be
+blank.
 
 TODO for your report:
 - Your GitHub Pages address.
