@@ -141,8 +141,16 @@ model files from Colab and publish the page from your own computer
 
 ## Problem 1. Choose your categories and collect the images
 
-Choose 3 to 5 categories. They have to be things you care about for some
-reason, and you have to say what that reason is.
+Choose 3 to 5 categories. They have to come from something you care about or
+know well, such as a hobby, your major, or things you see every day and can
+tell apart yourself, and you have to say what that reason is. Please avoid
+categories chosen only because they are easy to separate, such as cats and
+cars.
+
+3 to 5 is the number of categories in one classifier. You train one model that
+sorts images into all of your categories. For example, one model that tells
+espresso cups, wine glasses and paper coffee cups apart has 3 categories. You
+do not run three separate projects on different topics.
 
 ```
 uv run python src/collect.py --classes "espresso cup,wine glass,paper coffee cup" --n 150
@@ -163,7 +171,9 @@ gets it wrong.
 
 Write this down:
 - Why these categories? Why do you care?
-- What do you think the model will actually use to tell them apart?
+- What do you think the model will actually use to tell them apart: shape,
+  colour, texture, background, or something else? Write it before you train.
+  Problem 7 tests it.
 - How many images did you get for each? Show the counts.
 
 ## Problem 2. Turn your folder into numbers
@@ -241,8 +251,6 @@ Write this down:
   training all of them?
 
 ## Problem 4. Clean your data and train again
-
-This is the most important problem in the assignment.
 
 Every image in `data/clean` got its label from a search engine. You typed
 "wine glass", and whatever came back is now called `wine_glass`: drawings,
@@ -437,6 +445,56 @@ Write this down:
 - One sentence on what happens when you show it something that is none of your
   categories.
 
+## Problem 7. Find out what your model looks at
+
+This is the most important problem in the assignment.
+
+In Problem 1 you wrote down what you thought the model would use to tell your
+categories apart. Now you have a trained model, and you have seen its mistakes
+in `results/clean_worst.png` and in what `check.py` said about your new images.
+In this problem you change images on purpose and see how its answers change,
+to find out what it actually uses.
+
+Do this part yourself, not by handing it to your agent. You look at the images
+and the mistakes, you make the guess, and you choose the change that tests it.
+The agent only makes the changes you ask for.
+
+1. Write down a guess that is specific enough for an image change to prove it
+   wrong. "It uses the shape" is too vague. "It tells a wine glass from an
+   espresso cup by the long stem" can be tested.
+2. Choose the change that would show whether the guess is right, and the images
+   to change. Some kinds of change, depending on the guess:
+   - one part of the object: cover that part with a plain grey box, or crop it
+     out
+   - the background: put the same object on a different background
+   - colour: turn the image grayscale, or shift its colours
+   - fine texture: blur the image
+3. Ask your agent for exactly that change, on images you name. For example:
+   "Make a copy of each image in data/new_images/wine_glass with the bottom
+   third covered by a grey rectangle, and save the copies in
+   data/changed/wine_glass_no_stem." Keep the changed images out of
+   `data/clean` and `data/new_images`, so that they do not end up in training
+   or in your accuracy on new images.
+4. Show the original and the changed images to your model and compare its
+   answers. The simplest way is to upload them to your demo page, which shows
+   the probabilities and the square the model actually sees. Check that the
+   part you changed is inside that square.
+5. Use several images for each change, not one. A single image can change its
+   answer for reasons that have nothing to do with your guess.
+
+A result that goes against your guess tells you as much as one that supports
+it. Write it down, and make a new guess from it.
+
+Write this down:
+- Each guess, and what in your images or your model's mistakes made you think
+  of it.
+- For each change: the images you used, what you changed, why that change
+  tests the guess, and the model's answers before and after, with the original
+  and the changed images side by side.
+- The exact requests you gave your agent in this problem.
+- What you now think the model uses to tell your categories apart, and how sure
+  you are.
+
 ---
 
 ## What to submit on LMS
@@ -493,11 +551,16 @@ It holds:
   `python src/clean.py overlap`
 - The accuracy on your downloaded test set and the accuracy on your new images,
   next to each other
+- Your guesses from Problem 7, each original image next to its changed version
+  with the model's answers, and the requests you gave your agent
 
 ## How this is graded
 
-There are no points attached to the problems. Three things are looked at:
+There are no points attached to the problems. Four things are looked at:
 
+- Problem 7: whether your guesses come from your own images and mistakes,
+  whether each image change actually tests its guess, and what you concluded
+  from the results
 - Whether the demo works, at the address you gave, on someone else's computer
 - Whether the numbers in your long report are the ones `check.py` actually
   prints
@@ -509,7 +572,8 @@ A model that scores 95% with no explanation is worth less than one that scores
 ## Using AI coding agents
 
 Use them for the code and for the long report. That is what this course is
-about. You are responsible for what you submit: you have to be able to explain
+about. In Problem 7 you make the guesses and choose the tests yourself, and use
+the agent only to make the image changes you decided on. You are responsible for what you submit: you have to be able to explain
 what you were trying to do, how you got your result, and what it means, even if
 you cannot explain every line.
 

@@ -24,7 +24,11 @@ Check: six passed.
 ## Step 1. Choose your categories
 
 Not a coding step. Write down 3 to 5 categories and one sentence each on why
-you chose them. Keep the sentences. They go in your report.
+you chose them. They are the categories of one classifier, not separate
+projects. Keep the sentences. They go in your report.
+
+Also write down what you think the model will use to tell them apart. Step 18
+tests it.
 
 Check: you can say out loud what visible difference the model is supposed to
 find between them, and you know where you will get images of them that cannot
@@ -256,7 +260,31 @@ worked. If the page says it could not load the model, look at your repository
 on the GitHub website and see whether `docs/model.onnx` and `docs/model.json`
 are actually there.
 
-## Step 18. Write the long report
+## Step 18. Find out what your model looks at
+
+Do not give this step to your agent. You make the guesses and choose the tests
+yourself, and you ask the agent only to make the image changes you decided on
+(README, Problem 7).
+
+1. Look at `results/clean_worst.png`, the mistakes `check.py` listed for your
+   new images, and what you wrote in Step 1 about what the model will use.
+   Write down one guess about what it uses, specific enough that changing an
+   image can prove it wrong.
+2. Decide which change to the image would test that guess, and on which
+   images.
+3. Ask your agent for that change, naming the images and where to save the
+   copies. For example: "Make a copy of each image in
+   data/new_images/wine_glass with the bottom third covered by a grey
+   rectangle, and save the copies in data/changed/wine_glass_no_stem." Keep
+   your request word for word for the report.
+4. Upload the originals and the changed images to your demo page and write
+   down its answers.
+5. Make the next guess from what you saw, and repeat.
+
+Check: for each change, you can say what you expected the model to do, what it
+did, and what that tells you about your guess.
+
+## Step 19. Write the long report
 
 Go back through the "Write this down" boxes in README.md in order, with your
 agent. You should already have every number and every picture you need, from
@@ -264,7 +292,7 @@ the checks above.
 
 Check: every number in it is one you saw printed by code you ran.
 
-## Step 19. Write the short report
+## Step 20. Write the short report
 
 Close the agent. One page, by yourself, in Korean if that is your first
 language. The four questions are in README.md.
