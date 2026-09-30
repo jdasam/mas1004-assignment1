@@ -3,7 +3,7 @@
 This file is complete. You do not need to change it.
 
 Usage:
-    python src/collect.py --classes "espresso cup,mug,wine glass" --n 120
+    uv run python src/collect.py --classes "espresso cup,mug,wine glass" --n 120
 
 It writes into data/raw/<class name>/0001.jpg and so on. Images that fail to
 download, fail to open, or are too small are skipped and counted, so the number
@@ -16,10 +16,45 @@ import io
 import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
-import requests
-from PIL import Image
+# The same versions as in pyproject.toml and requirements.txt. Other versions
+# of these two have crashed the whole program on macOS or failed to search,
+# with errors that do not say why.
+PINNED = {"ddgs": "9.16.0", "primp": "1.3.1"}
+
+
+def check_versions():
+    """Stop before anything else if the search library is not what we tested."""
+    wrong = []
+    for name, wanted in PINNED.items():
+        try:
+            have = version(name)
+        except PackageNotFoundError:
+            have = "not installed"
+        if have != wanted:
+            wrong.append(f"  {name}: {have}, needs {wanted}")
+    if not wrong:
+        return
+    python = ".".join(str(n) for n in sys.version_info[:3])
+    sys.exit(
+        f"The Python running this ({python}, {sys.executable}) has the wrong\n"
+        "versions of the image search library:\n"
+        + "\n".join(wrong)
+        + "\n\nOn your own computer, run it through uv, which installs exactly"
+        " the right ones:\n"
+        '  uv run python src/collect.py --classes "..." --n 150\n'
+        "On Colab, run the install cell of the notebook first:\n"
+        "  !pip install -q -r requirements.txt\n"
+        "Do not install other versions by hand."
+    )
+
+
+check_versions()
+
+import requests  # noqa: E402  (after the check, which may stop us first)
+from PIL import Image  # noqa: E402
 
 HEADERS = {
     "User-Agent": (

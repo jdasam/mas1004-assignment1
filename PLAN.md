@@ -15,8 +15,9 @@ check passes.
 
 ## Step 0. Make sure the room is empty before you move in
 
-Run `pytest tests/test_export.py`. Six tests should pass. They cover code you
-were given, so if they fail, nothing you write afterwards will work either.
+Run `uv run pytest tests/test_export.py`. Six tests should pass. They cover
+code you were given, so if they fail, nothing you write afterwards will work
+either.
 
 Check: six passed.
 
@@ -32,7 +33,7 @@ be among your downloads (Step 4).
 ## Step 2. Download the images
 
 ```
-python src/collect.py --classes "your,categories,here" --n 150
+uv run python src/collect.py --classes "your,categories,here" --n 150
 cp -r data/raw data/clean
 ```
 
@@ -43,7 +44,7 @@ Change the phrase, not the category.
 ## Step 3. Look at what you downloaded
 
 ```
-python src/clean.py look
+uv run python src/clean.py look
 ```
 
 Open every sheet in `results/cleaning/look/` and look at every picture. Do not
@@ -63,7 +64,7 @@ yourself, take them in different places and different light. If you take them
 all on the same desk in one evening, Problems 4 and 5 have nothing to say.
 
 ```
-python src/clean.py overlap
+uv run python src/clean.py overlap
 ```
 
 Check: every category has a folder in `data/new_images/` with at least five
@@ -76,7 +77,7 @@ Give the agent the docstring of `prepare_image` in `src/data.py` and ask it to
 write the body. Then run:
 
 ```
-pytest tests/test_data.py -k prepare
+uv run pytest tests/test_data.py -k prepare
 ```
 
 The tests will fail in specific ways. Give the agent the failure text as it is,
@@ -87,7 +88,7 @@ that is not square.
 
 ## Step 6. Write `load_folder` and `split_train_test`
 
-Same again, then `pytest tests/test_data.py`.
+Same again, then `uv run pytest tests/test_data.py`.
 
 Before you move on, read the test called
 `test_split_has_no_image_on_both_sides` and make sure you understand why it
@@ -100,7 +101,7 @@ Check: all of `tests/test_data.py` is green.
 ## Step 7. Write `build_model` and `train`
 
 ```
-pytest tests/test_train.py
+uv run pytest tests/test_train.py
 ```
 
 The first run downloads the ImageNet weights, about 45 MB. The last test trains
@@ -115,7 +116,7 @@ Check: all of `tests/test_train.py` is green.
 ## Step 8. Write `predict_logits`, `accuracy` and `confusion_matrix`
 
 ```
-pytest tests/test_evaluate.py -k "not worst"
+uv run pytest tests/test_evaluate.py -k "not worst"
 ```
 
 Check: green.
@@ -123,7 +124,7 @@ Check: green.
 ## Step 9. Run the whole thing for the first time
 
 ```
-python src/run.py
+uv run python src/run.py
 ```
 
 On a laptop without a GPU this takes several minutes. On Colab with the GPU
@@ -138,9 +139,9 @@ again.
 ## Step 10. Run it three more times
 
 ```
-python src/run.py --scratch --tag scratch
-python src/run.py --freeze --lr 1e-3 --tag frozen
-python src/run.py <a setting of your own> --tag <a name for it>
+uv run python src/run.py --scratch --tag scratch
+uv run python src/run.py --freeze --lr 1e-3 --tag frozen
+uv run python src/run.py <a setting of your own> --tag <a name for it>
 ```
 
 Write each printed row into the table in your report as you go. Do not wait
@@ -161,7 +162,7 @@ ones you would.
 ## Step 12. Go through the suspects and the near copies
 
 ```
-python src/clean.py suspects
+uv run python src/clean.py suspects
 ```
 
 Open `results/cleaning/suspects/`. For each class sheet, go through the
@@ -169,21 +170,21 @@ suspects in order and decide each one by your rule. Then go through
 `copies.png` and keep one of each pair. Remove with:
 
 ```
-python src/clean.py remove <class>/<file> <class>/<file> --reason "<which part of your rule>"
+uv run python src/clean.py remove <class>/<file> <class>/<file> --reason "<which part of your rule>"
 ```
 
 Then go back through the sheets from Step 3 for anything the suspect list did
 not catch.
 
-Check: `python src/clean.py count` prints how many you removed from each class
-and why, and you know how many of the first 20 suspects in each class you
-removed.
+Check: `uv run python src/clean.py count` prints how many you removed from
+each class and why, and you know how many of the first 20 suspects in each
+class you removed.
 
 ## Step 13. Train on the clean data and compare fairly
 
 ```
-python src/run.py --tag clean
-python src/check.py --compare run clean
+uv run python src/run.py --tag clean
+uv run python src/check.py --compare run clean
 ```
 
 Check: you have the test accuracy before and after, and the accuracy on your
@@ -193,8 +194,8 @@ comparison.
 ## Step 14. Write `worst_examples` and look at the mistakes
 
 ```
-pytest tests/test_evaluate.py
-python src/run.py --tag clean
+uv run pytest tests/test_evaluate.py
+uv run python src/run.py --tag clean
 ```
 
 Check: `results/clean_worst.png` shows ten pictures with what the model said
@@ -203,8 +204,8 @@ and what they really are.
 ## Step 15. Put the clean model on your page and check it
 
 ```
-python src/export_web.py --tag clean
-python src/check.py
+uv run python src/export_web.py --tag clean
+uv run python src/check.py
 ```
 
 Check: `check.py` says the exported model agrees with Python, and reports an
@@ -213,7 +214,7 @@ accuracy on your new images.
 ## Step 16. Open the demo on your own machine
 
 ```
-python -m http.server -d docs 8000
+uv run python -m http.server -d docs 8000
 ```
 
 Open http://localhost:8000.

@@ -62,24 +62,66 @@ ResNet18 (your `src/data.py` has no `prepare_image` in it), make a new copy
 from the template and move your `data/` folder into it. Your downloaded images
 are not in git, so they do not come with the new copy on their own.
 
+If you made your copy before 1 October, it has no `pyproject.toml`. Take the
+uv setup from the template into your repository, in your repository folder:
+
+```
+git remote add template https://github.com/jdasam/mas1004-assignment1.git
+git fetch template
+git checkout template/main -- pyproject.toml uv.lock .python-version AGENTS.md CLAUDE.md .gitignore requirements.txt src/collect.py README.md PLAN.md
+git commit -m "Use uv"
+```
+
+This replaces only the files named on the third line, none of the ones you
+write.
+
 ## Setting up
 
-```
-pip install -r requirements.txt
-```
+On your own computer, use uv. It downloads the right version of Python and the
+exact version of every package this assignment needs, and puts them in a
+`.venv` folder inside your repository. You get the same versions on Windows,
+macOS and Linux, and the Python you may already have is not touched.
 
-If `pip` is not available, or you would rather not touch your system Python,
-`uv run --with-requirements requirements.txt python src/run.py` works too.
-
-Check that it is alive:
+Install uv once. On macOS, in Terminal:
 
 ```
-pytest tests/test_export.py
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
+
+On Windows, in PowerShell:
+
+```
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Then close the terminal, and quit and reopen VS Code, so that they can find
+`uv`. `uv --version` should print a version number.
+
+From now on, start every command with `uv run`. In your repository folder,
+check that it is alive:
+
+```
+uv run pytest tests/test_export.py
+```
+
+The first time, this takes a few minutes, because uv downloads Python, PyTorch
+and the rest. After that it starts at once. Do not `pip install` anything, and
+do not change the versions in `pyproject.toml`: `uv.lock` holds exact versions
+that were tested together. `AGENTS.md` tells your coding agent the same, and
+most agents read it on their own.
 
 Those tests cover code that was given to you, so they should pass before you
 write a single line. If they do not, fix that first and ask for help if you
 need it. Everything else will fail until you write it.
+
+On Google Colab you do not need uv. The notebook installs everything with pip,
+and there you leave `uv run` off every command.
+
+Some computers cannot run this assignment, because PyTorch does not make
+packages for them: Intel Macs, and Windows laptops with an ARM processor
+(Snapdragon). uv stops with "not compatible with the lockfile's supported
+environments" on them. Use Colab. On a Mac with Apple Silicon, you need macOS
+14 (Sonoma) or later.
 
 Training ResNet18 is much faster on a GPU. On a laptop without one, a run of
 10 epochs on 400 images takes several minutes. Google Colab gives you a GPU
@@ -95,7 +137,7 @@ Choose 3 to 5 categories. They have to be things you care about for some
 reason, and you have to say what that reason is.
 
 ```
-python src/collect.py --classes "espresso cup,wine glass,paper coffee cup" --n 150
+uv run python src/collect.py --classes "espresso cup,wine glass,paper coffee cup" --n 150
 ```
 
 This downloads images into `data/raw/`. Then copy `data/raw` to `data/clean`
@@ -121,7 +163,7 @@ Write this down:
 Write `prepare_image`, `load_folder` and `split_train_test` in `src/data.py`.
 
 ```
-pytest tests/test_data.py
+uv run pytest tests/test_data.py
 ```
 
 `prepare_image` prepares one photo exactly the way every ImageNet photo was
@@ -151,8 +193,8 @@ Write `build_model` and `train` in `src/train.py`, and `predict_logits`,
 `accuracy` and `confusion_matrix` in `src/evaluate.py`.
 
 ```
-pytest tests/test_train.py tests/test_evaluate.py
-python src/run.py
+uv run pytest tests/test_train.py tests/test_evaluate.py
+uv run python src/run.py
 ```
 
 `src/run.py` trains, measures, draws three pictures into `results/`, and saves
@@ -162,9 +204,9 @@ for you. Do all of this before you clean anything: the run tagged `run` is the
 "before" that Problem 4 compares against.
 
 ```
-python src/run.py
-python src/run.py --scratch --tag scratch
-python src/run.py --freeze --lr 1e-3 --tag frozen
+uv run python src/run.py
+uv run python src/run.py --scratch --tag scratch
+uv run python src/run.py --freeze --lr 1e-3 --tag frozen
 ```
 
 | tag | start | trained | epochs | lr | trainable parameters | train accuracy | test accuracy |
@@ -211,7 +253,7 @@ code you wrote.
 ### 1. Look at every image
 
 ```
-python src/clean.py look
+uv run python src/clean.py look
 ```
 
 This draws every image in `data/clean` onto sheets in
@@ -227,7 +269,7 @@ pictures where the object was not the main thing in the frame" is a rule.
 ### 3. Ask the rest of your data
 
 ```
-python src/clean.py suspects
+uv run python src/clean.py suspects
 ```
 
 For every image, this trains a small classifier on all the other images and
@@ -248,7 +290,7 @@ by your rule.
 ### 4. Remove what breaks your rule
 
 ```
-python src/clean.py remove wine_glass/0063.jpg wine_glass/0069.jpg --reason "chart, not a photo"
+uv run python src/clean.py remove wine_glass/0063.jpg wine_glass/0069.jpg --reason "chart, not a photo"
 ```
 
 This moves the files out of `data/clean` into `data/removed/` and records the
@@ -259,9 +301,9 @@ right.
 ### 5. Count, train again, and compare fairly
 
 ```
-python src/clean.py count
-python src/run.py --tag clean
-python src/check.py --compare run clean
+uv run python src/clean.py count
+uv run python src/run.py --tag clean
+uv run python src/check.py --compare run clean
 ```
 
 Cleaning changed your test set as well as your training set, because some of
@@ -313,7 +355,7 @@ product photos are copied onto every shopping site, so a second search brings
 back many of the pictures you already have. Check with:
 
 ```
-python src/clean.py overlap
+uv run python src/clean.py overlap
 ```
 
 It compares every new image with every image you downloaded and draws the near
@@ -325,8 +367,8 @@ Then write `worst_examples` in `src/evaluate.py`, put your cleaned model on
 your page, and run the checker:
 
 ```
-python src/export_web.py --tag clean
-python src/check.py
+uv run python src/export_web.py --tag clean
+uv run python src/check.py
 ```
 
 `check.py` measures the model that is now on your page on your new images, and
@@ -352,7 +394,7 @@ Write this down:
 first on your own machine:
 
 ```
-python -m http.server -d docs 8000
+uv run python -m http.server -d docs 8000
 ```
 
 and open http://localhost:8000. Opening `index.html` by double clicking will
@@ -466,8 +508,9 @@ it is the one place where the answer has to be yours.
 
 ## When you are stuck
 
-- Run `python src/check.py`. It works out the answers for itself from the files
-  on disk, so when it disagrees with your own code, one of the two is wrong.
+- Run `uv run python src/check.py`. It works out the answers for itself from
+  the files on disk, so when it disagrees with your own code, one of the two
+  is wrong.
 - Read the error at the bottom of the traceback, not the top.
 - If a test fails, paste the whole test output to your agent, not your summary
   of it.
