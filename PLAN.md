@@ -130,6 +130,11 @@ uv run python src/run.py
 On a laptop without a GPU this takes several minutes. On Colab with the GPU
 turned on it is much faster.
 
+To train on Colab, commit and push your code first, and run this step and the
+ones up to Step 15 in the notebook, which takes your code from GitHub. When a
+step asks you to write code, write it here, push it, and bring it over with
+section 9 of the notebook. Come back here for Step 16.
+
 Look at `results/run_curves.png` and `results/run_confusion.png`.
 
 Check: it finished, it printed a train accuracy and a test accuracy, and the
@@ -212,6 +217,10 @@ Check: `check.py` says the exported model agrees with Python, and reports an
 accuracy on your new images.
 
 ## Step 16. Open the demo on your own machine
+
+If you trained on Colab, first copy `model.onnx`, `model.json` and
+`selftest.json` from `docs/` on Colab into `docs/` here. Section 15 of the
+notebook packs them for you.
 
 ```
 uv run python -m http.server -d docs 8000

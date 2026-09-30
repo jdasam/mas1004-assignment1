@@ -43,3 +43,10 @@ work around it with pip or other versions.
 
 uv is not used on Colab. `assignment1_colab.ipynb` installs with
 `pip install -q -r requirements.txt` and runs `python ...` directly.
+
+Colab is only for running things. The notebook takes the code from the
+student's repository on GitHub and replaces anything edited on Colab. So code
+changes are made here, on the student's computer, then committed and pushed,
+and the student brings them over with section 9 of the notebook. Never tell the
+student to edit code on Colab. The model files that `src/export_web.py` writes
+on Colab come back here to be committed and published.

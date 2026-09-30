@@ -68,7 +68,7 @@ uv setup from the template into your repository, in your repository folder:
 ```
 git remote add template https://github.com/jdasam/mas1004-assignment1.git
 git fetch template
-git checkout template/main -- pyproject.toml uv.lock .python-version AGENTS.md CLAUDE.md .gitignore requirements.txt src/collect.py README.md PLAN.md
+git checkout template/main -- pyproject.toml uv.lock .python-version AGENTS.md CLAUDE.md .gitignore requirements.txt src/collect.py src/check.py src/clean.py README.md PLAN.md
 git commit -m "Use uv"
 ```
 
@@ -125,9 +125,17 @@ environments" on them. Use Colab. On a Mac with Apple Silicon, you need macOS
 
 Training ResNet18 is much faster on a GPU. On a laptop without one, a run of
 10 epochs on 400 images takes several minutes. Google Colab gives you a GPU
-for free, and `assignment1_colab.ipynb` sets everything up there. Open it
+for free, and `assignment1_colab.ipynb` runs the assignment there. Open it
 directly in Colab with this link:
 https://colab.research.google.com/github/jdasam/mas1004-assignment1/blob/main/assignment1_colab.ipynb
+
+Use Colab only to run things: downloading, training, cleaning and checking.
+Write your code on your own computer with your agent, and push it. The
+notebook takes your code from your repository on GitHub, so push before you
+run it, and do not edit code in Colab: the notebook replaces it with what is on
+GitHub every time it updates. When the training is done, you download the
+model files from Colab and publish the page from your own computer
+(Problem 6).
 
 ---
 
@@ -390,8 +398,12 @@ Write this down:
 
 ## Problem 6. Put the demo on the web
 
-`src/export_web.py` wrote everything the page needs into `docs/`. Look at it
-first on your own machine:
+`src/export_web.py` wrote everything the page needs into `docs/`. If you
+trained on Colab, it wrote them into `docs/` on Colab: copy `model.onnx`,
+`model.json` and `selftest.json` into `docs/` in your repository on your own
+computer first. The last section of the notebook packs them for you.
+
+Look at it first on your own machine:
 
 ```
 uv run python -m http.server -d docs 8000
