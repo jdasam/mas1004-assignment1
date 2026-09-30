@@ -57,9 +57,10 @@ Check: you can name three kinds of junk that came back.
 At least five per category, into `data/new_images/<category>/`, with the same
 folder names as `data/clean`. They must come from a source you can be sure is
 not in your downloads: your own photos, a friend's photos, frames from a video
-you recorded. Not another web search. If you take photos yourself, take them in
-different places and different light. If you take them all on the same desk in
-one evening, Problems 4 and 5 have nothing to say.
+you recorded. Not another web search. Save them as JPEG or PNG, not the HEIC
+files an iPhone makes by default (README, Problem 5). If you take photos
+yourself, take them in different places and different light. If you take them
+all on the same desk in one evening, Problems 4 and 5 have nothing to say.
 
 ```
 python src/clean.py overlap

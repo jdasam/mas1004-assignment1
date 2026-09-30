@@ -295,6 +295,12 @@ not in your downloaded images, and put them in `data/new_images/<category>/`,
 using exactly the category names from your training folders. Collect them
 early, because Problem 4 uses them too.
 
+Save them as JPEG or PNG. An iPhone saves photos as HEIC (`.heic`) unless you
+change it, and the code here cannot read HEIC. On the iPhone, Settings,
+Camera, Formats, Most Compatible makes it save JPEG from then on. Photos you
+already took in HEIC have to be converted to JPEG, which your coding agent can
+do for you. `check.py` tells you if it finds a HEIC file.
+
 What counts as such a source is up to you, as long as you can say why none of
 its images can be among your downloads. Some that work:
 - photographs you take yourself, which is the simplest

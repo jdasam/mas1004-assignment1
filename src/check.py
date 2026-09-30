@@ -30,6 +30,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
+HEIC_SUFFIXES = {".heic", ".heif"}  # what iPhones save by default; unreadable here
 
 problems = []
 warnings = []
@@ -63,7 +64,8 @@ def image_files(folder):
 # ---------------------------------------------------------------------------
 
 
-def check_folder(name, folder, least_per_class):
+def check_folder(name, folder, least_per_class, required):
+    """required: fewer than least_per_class is a problem, not just a warning."""
     title(f"{name}  ({folder})")
     folder = Path(folder)
     if not folder.exists():
@@ -81,13 +83,30 @@ def check_folder(name, folder, least_per_class):
         counts[class_dir.name] = len(files)
         print(f"  {class_dir.name:28s} {len(files):5d} images")
 
+    heic = sorted(p for p in folder.rglob("*")
+                  if p.is_file() and p.suffix.lower() in HEIC_SUFFIXES)
+    if heic:
+        shown = ", ".join(str(p.relative_to(folder)) for p in heic[:3])
+        complain(
+            f"{len(heic)} HEIC photo(s) in {folder.name}/ cannot be read, so they "
+            f"are not counted above: {shown}{' ...' if len(heic) > 3 else ''}. "
+            "Convert them to JPEG (README, Problem 5)."
+        )
+
     if len(counts) < 3:
         complain(f"only {len(counts)} classes. You need at least 3.")
     fewest = min(counts.values()) if counts else 0
-    if fewest < least_per_class:
+    smallest = min(counts, key=counts.get)
+    if fewest < least_per_class and required:
         complain(
-            f'"{min(counts, key=counts.get)}" has only {fewest} images, '
+            f'"{smallest}" has only {fewest} images, '
             f"fewer than the {least_per_class} this assignment asks for"
+        )
+    elif fewest < least_per_class:
+        warn(
+            f'"{smallest}" has only {fewest} images. With this few, the model '
+            "has little to learn that class from, and its test accuracy rests "
+            "on a handful of test images."
         )
     most = max(counts.values()) if counts else 0
     if fewest and most > fewest * 3:
@@ -392,9 +411,11 @@ def main():
 
     print("MAS1004 Assignment 1, checking your work")
 
-    check_folder("Training images", ROOT / "data" / "clean", least_per_class=50)
+    check_folder("Training images", ROOT / "data" / "clean", least_per_class=50,
+                 required=False)
     new_images = new_images_folder()
-    check_folder("Your images from a new source", new_images, least_per_class=5)
+    check_folder("Your images from a new source", new_images, least_per_class=5,
+                 required=True)
     check_for_repeats([ROOT / "data" / "clean", new_images])
 
     loaded = load_web_model()

@@ -362,6 +362,11 @@ def count(args):
 
 
 def overlap(args):
+    heic = sorted(p for p in NEW.rglob("*")
+                  if p.is_file() and p.suffix.lower() in {".heic", ".heif"})
+    if heic:
+        print(f"{len(heic)} HEIC photo(s) in data/new_images cannot be read and are "
+              "left out. Convert them to JPEG (README, Problem 5).\n")
     new = [p for paths in images_by_class(NEW).values() for p in paths]
     if not new:
         sys.exit(f"{NEW} has no images in class folders yet.")
