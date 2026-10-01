@@ -138,7 +138,10 @@ Three things to think about when you choose.
   lists all 1,000 of them. ResNet18 has already learned to tell those apart, so
   training it on them adds almost nothing. Things that ImageNet calls by one
   name are a good place to look: ImageNet has a category for pizza, but not
-  for Neapolitan, New York and Chicago pizza.
+  for Neapolitan, New York and Chicago pizza. The cup categories used as
+  examples in this README are not a good choice for this reason: ImageNet
+  already has espresso, cup, coffee mug, goblet and red wine. They are there
+  only to show how things work.
 - In Problem 5 you test the model on images from a source that cannot overlap
   with your downloads, such as your own photos, so choose things you can find
   such images of.

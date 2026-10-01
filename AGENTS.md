@@ -150,7 +150,10 @@ uv run python src/collect.py --classes "espresso cup,wine glass,paper coffee cup
 Before downloading, check the student's categories against
 `imagenet_classes.txt`, the 1,000 categories ResNet18 already tells apart, and
 tell the student if one of theirs is in it or very close to one. The student
-decides what to do about it.
+decides what to do about it. The cup categories in the examples in these files
+(espresso cup, wine glass, paper coffee cup) only show how the commands work.
+They are close to ImageNet categories (espresso, cup, coffee mug, goblet, red
+wine), so do not suggest them.
 
 It saves into `data/raw/<category>/`. Then copy `data/raw` to `data/clean`
 once. If a category comes back with fewer than about 50 images, the search
