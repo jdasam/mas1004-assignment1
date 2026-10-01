@@ -30,6 +30,10 @@ projects. Keep the sentences. They go in your report.
 Also write down what you think the model will use to tell them apart. Step 18
 tests it.
 
+Then have your agent check them against `imagenet_classes.txt`, the 1,000
+categories ResNet18 already tells apart. If one of yours is in it, the model
+already knows it, and training on it adds almost nothing.
+
 Check: you can say out loud what visible difference the model is supposed to
 find between them, and you know where you will get images of them that cannot
 be among your downloads (Step 4).
@@ -62,8 +66,9 @@ Check: you can name three kinds of junk that came back.
 At least five per category, into `data/new_images/<category>/`, with the same
 folder names as `data/clean`. They must come from a source you can be sure is
 not in your downloads: your own photos, a friend's photos, frames from a video
-you recorded. Not another web search. Save them as JPEG or PNG, not the HEIC
-files an iPhone makes by default (README, Problem 5). If you take photos
+you recorded, or images from the web that you are sure your download could not
+have found. Save them as JPEG or PNG, not the HEIC files an iPhone makes by
+default (README, Problem 5). If you take photos
 yourself, take them in different places and different light. If you take them
 all on the same desk in one evening, Problems 4 and 5 have nothing to say.
 
@@ -248,26 +253,16 @@ fix `prepare_image`, and then train and export again.
 
 ## Step 17. Publish it
 
-```
-git add -A
-git commit -m "trained model and demo"
-git push
-```
+Ask your agent to commit and push, and to turn on GitHub Pages (AGENTS.md,
+Problem 6). It gives you the address.
 
 `docs/model.onnx` is about 45 MB, so this push takes a while. Do it once, with
 the model you want to hand in, not after every experiment.
 
-Then on the GitHub website: your repository, Settings, Pages, Source "Deploy
-from a branch", Branch `main`, Folder `/docs`, Save.
-
-Your agent can do the git part for you. If it goes in circles over `gh auth
-login` for more than ten minutes, stop it and use the website. Getting the
-command line tool authenticated is not what this assignment is about.
-
 Check: you opened the address on your phone, away from your own wifi, and it
-worked. If the page says it could not load the model, look at your repository
-on the GitHub website and see whether `docs/model.onnx` and `docs/model.json`
-are actually there.
+worked. If the page says it could not load the model, have your agent check
+whether `docs/model.onnx` and `docs/model.json` are really in your repository
+on GitHub.
 
 ## Step 18. Find out what your model looks at
 
@@ -312,11 +307,12 @@ printed by code you ran.
 
 Close the agent. One page, by yourself, in Korean if that is your first
 language. Open the English or the Korean template on Overleaf with the links
-under "The short report" in README.md. The four questions are in it.
+under "The short report" in README.md, and write freely about what you
+learned: which topic you chose and why, how the assignment went, and what you
+learned.
 
-This is the last step for a reason. You cannot answer question 2 or 4 until you
-have seen your model fail, and you cannot answer question 3 unless you were
-paying attention the whole way through.
+This is the last step because you can only write it once you have been
+through all of the others.
 
 Check: it fits on one page, with no red note at the end, and you wrote all
 of it.
