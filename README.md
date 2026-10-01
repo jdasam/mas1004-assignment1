@@ -363,7 +363,13 @@ repository: it copies the pictures into `long_report/figures/` and saves the
 output of each command into `long_report/outputs/`, from where the report
 prints it exactly as it was. Red text in the PDF is what is still missing.
 
-To make the PDF, ask your agent to compress the `long_report` folder into a
+To see the empty template on Overleaf, log in to Overleaf and open this link.
+It makes a new project of your own with the template in it:
+
+- [Long report template](https://www.overleaf.com/docs?engine=xelatex&main_document=long_report.tex&snip_uri%5B%5D=https://raw.githubusercontent.com/jdasam/mas1004-assignment1/main/long_report/long_report.tex&snip_name%5B%5D=long_report.tex&snip_uri%5B%5D=https://raw.githubusercontent.com/jdasam/mas1004-assignment1/main/long_report/mas1004.sty&snip_name%5B%5D=mas1004.sty)
+
+This project has no pictures or outputs in it. To make the PDF of your filled-in
+report, ask your agent to compress the `long_report` folder into a
 zip, and on Overleaf choose New Project, Upload Project. Set the compiler to XeLaTeX (Menu,
 Compiler) and press Recompile.
 
