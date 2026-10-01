@@ -4,8 +4,9 @@
 % Compile with XeLaTeX. On Overleaf: Menu, Settings, Compiler, XeLaTeX.
 %
 % Options
-%   onepage   print a red note at the end if the document runs past one page
-%   ko        Korean labels in the header
+%   onepage   one page of text, then at most three pages of figures after
+%             \figurepages; a red note appears if either runs over
+%   ko        Korean labels in the header and in figure captions
 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{mas1004}[2026/10/01 MAS1004 report style]
@@ -51,6 +52,7 @@
 \titlespacing*{\section}{0pt}{1.2em}{0.4em}
 \titlespacing*{\subsection}{0pt}{0.9em}{0.3em}
 \pagestyle{plain}
+\ifmas@ko\AtBeginDocument{\renewcommand{\figurename}{그림}}\fi
 
 % Header -----------------------------------------------------------------
 
@@ -79,14 +81,41 @@
 % A question as a heading, with the answer written under it.
 \newcommand{\question}[1]{\par\vspace{0.6em}{\bfseries #1\par}\vspace{0.2em}}
 
+% A red note after the text if the text runs past one page. The penalty makes
+% TeX break the page now if the last line does not fit, so that the page
+% counter is right.
+\newcommand{\mas@checktext}{%
+  \par\penalty0
+  \ifnum\value{page}>1
+    \medskip
+    {\color{red}\bfseries
+      \ifmas@ko 본문이 한 쪽을 넘었습니다. 한 쪽으로 줄이세요.%
+      \else The text is longer than one page. Cut it to one page.\fi\par}
+    \PackageWarningNoLine{mas1004}{The text is longer than one page}%
+  \fi}
+
+% Ends the text and starts the figure pages, which come after it.
+\newif\ifmas@figures
+\newcount\mas@figstart
+\newcommand{\figurepages}{%
+  \ifmas@onepage\mas@checktext\fi
+  \clearpage
+  \global\mas@figurestrue
+  \global\mas@figstart=\value{page}}
+
 \ifmas@onepage
   \AtEndDocument{%
-    \ifnum\value{page}>1
-      \par\medskip
-      {\color{red}\bfseries
-        \ifmas@ko 한 쪽을 넘었습니다. 한 쪽으로 줄이세요.%
-        \else This report is longer than one page. Cut it to one page.\fi\par}
-      \PackageWarningNoLine{mas1004}{The report is longer than one page}%
+    \ifmas@figures
+      \clearpage
+      \ifnum\numexpr\value{page}-\mas@figstart\relax>3
+        {\color{red}\bfseries
+          \ifmas@ko 그림이 세 쪽을 넘었습니다. 세 쪽으로 줄이세요.%
+          \else The figures take more than three pages. Cut them to
+            three.\fi\par}
+        \PackageWarningNoLine{mas1004}{The figures take more than three pages}%
+      \fi
+    \else
+      \mas@checktext
     \fi}
 \fi
 

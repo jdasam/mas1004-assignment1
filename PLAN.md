@@ -305,14 +305,14 @@ printed by code you ran.
 
 ## Step 20. Write the short report
 
-Close the agent. One page, by yourself, in Korean if that is your first
-language. Open the English or the Korean template on Overleaf with the links
-under "The short report" in README.md, and write freely about what you
-learned: which topic you chose and why, how the assignment went, and what you
-learned.
+Close the agent. One page of text, by yourself, in Korean if that is your
+first language, and up to three more pages of figures if you want them. Open
+the English or the Korean template on Overleaf with the links under "The short
+report" in README.md, and write freely about what you learned: which topic you
+chose and why, how the assignment went, and what you learned.
 
 This is the last step because you can only write it once you have been
 through all of the others.
 
-Check: it fits on one page, with no red note at the end, and you wrote all
-of it.
+Check: the text fits on one page and the figures on at most three more, with
+no red note in the PDF, and you wrote all of it.

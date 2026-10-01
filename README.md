@@ -38,7 +38,8 @@ do not run three separate projects on different topics.
 
    The model runs inside the web page, so the demo works without a server, and
    nobody's photos are sent anywhere.
-2. The short report as a PDF: one page, written by you, from the template in
+2. The short report as a PDF: one page of text written by you, and up to
+   three more pages of figures if you want them, from the template in
    `short_report/`.
 3. The long report as a PDF: written with your agent, from the template in
    `long_report/`.
@@ -321,7 +322,8 @@ Write this down:
 
 ## The short report
 
-One page. Not one and a bit. One.
+One page of text. Not one and a bit. One. After the text you may add up to
+three pages of figures.
 
 Write it yourself. No language model, at any stage, including for tidying it up
 afterwards. If Korean is your first language, write it in Korean. This is the
@@ -342,8 +344,12 @@ these links. Each makes a new project of your own with the template in it:
 
 If a link does not work, ask your agent to compress the `short_report` folder
 into a zip, and on Overleaf choose New Project, Upload Project. Either way, the compiler has to
-be XeLaTeX (Menu, Compiler). Do not use Overleaf's AI tools on this report. If
-it runs past one page, a red note appears at the end of the PDF.
+be XeLaTeX (Menu, Compiler). Do not use Overleaf's AI tools on this report.
+
+The first page of the template is a short guide to the LaTeX you need. Read it,
+then delete it and write your report in its place. If the text runs past one
+page, or the figures take more than three pages, a red note appears in the
+PDF.
 
 ## The long report
 
