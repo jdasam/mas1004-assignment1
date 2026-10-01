@@ -68,8 +68,12 @@ yourself, take them in different places and different light. If you take them
 all on the same desk in one evening, Problems 4 and 5 have nothing to say.
 
 ```
-uv run python src/clean.py overlap
+uv run python src/clean.py overlap | tee results/overlap.txt
 ```
+
+The `| tee results/...` at the end shows the output and also saves it in
+`results/`, for the long report. Run it again after you take out any near
+copies, so that the saved output is the final one.
 
 Check: every category has a folder in `data/new_images/` with at least five
 images in it, `clean.py overlap` finds no near copies, and you can say in one
@@ -139,7 +143,8 @@ ones up to Step 15 in the notebook, which takes your code from GitHub. When a
 step asks you to write code, write it here, push it, and bring it over with
 section 9 of the notebook. Come back here for Step 16.
 
-Look at `results/run_curves.png` and `results/run_confusion.png`.
+Look at `results/run_curves.png` and `results/run_confusion.png`. Everything
+`run.py` prints is also saved in `results/run_output.txt`, for the long report.
 
 Check: it finished, it printed a train accuracy and a test accuracy, and the
 loss curve goes down. If the two accuracies are identical, look at your split
@@ -183,9 +188,13 @@ uv run python src/clean.py remove <class>/<file> <class>/<file> --reason "<which
 ```
 
 Then go back through the sheets from Step 3 for anything the suspect list did
-not catch.
+not catch. When you are done:
 
-Check: `uv run python src/clean.py count` prints how many you removed from
+```
+uv run python src/clean.py count | tee results/clean_count.txt
+```
+
+Check: `clean.py count` prints how many you removed from
 each class and why, and you know how many of the first 20 suspects in each
 class you removed.
 
@@ -193,7 +202,7 @@ class you removed.
 
 ```
 uv run python src/run.py --tag clean
-uv run python src/check.py --compare run clean
+uv run python src/check.py --compare run clean | tee results/compare.txt
 ```
 
 Check: you have the test accuracy before and after, and the accuracy on your
@@ -214,7 +223,7 @@ and what they really are.
 
 ```
 uv run python src/export_web.py --tag clean
-uv run python src/check.py
+uv run python src/check.py | tee results/check.txt
 ```
 
 Check: `check.py` says the exported model agrees with Python, and reports an
@@ -290,15 +299,24 @@ Go back through the "Write this down" boxes in README.md in order, with your
 agent. You should already have every number and every picture you need, from
 the checks above.
 
-Check: every number in it is one you saw printed by code you ran.
+Your agent fills in `long_report/long_report.tex` (AGENTS.md says how). It
+copies the pictures it needs from `results/` into `long_report/figures/`, and
+the saved outputs, `results/*.txt`, into `long_report/outputs/`. To make the
+PDF, compress the `long_report` folder into a zip, and on Overleaf choose New
+Project, Upload Project, set the compiler to XeLaTeX, and Recompile.
+
+Check: no red text is left in the PDF, and every number in it is one you saw
+printed by code you ran.
 
 ## Step 20. Write the short report
 
 Close the agent. One page, by yourself, in Korean if that is your first
-language. The four questions are in README.md.
+language. Open the English or the Korean template on Overleaf with the links
+under "The short report" in README.md. The four questions are in it.
 
 This is the last step for a reason. You cannot answer question 2 or 4 until you
 have seen your model fail, and you cannot answer question 3 unless you were
 paying attention the whole way through.
 
-Check: it fits on one page, and you wrote all of it.
+Check: it fits on one page, with no red note at the end, and you wrote all
+of it.

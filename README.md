@@ -2,7 +2,7 @@
 
 MAS1004 Data & AI, 2026 Fall
 
-Due: Friday 16 October, 22:00, on LMS.
+Due: Friday 16 October, 22:00, on Cyber Campus (LMS).
 
 ## What you do
 
@@ -26,14 +26,26 @@ Two things matter most:
 espresso cups, wine glasses and paper coffee cups apart has 3 categories. You
 do not run three separate projects on different topics.
 
-## What you hand in, on LMS
+## What you hand in, on Cyber Campus (LMS)
 
-1. The address of your web demo. The model runs inside the page, so it works
-   without a server, and nobody's photos are sent anywhere.
-2. The address of your code repository.
-3. The short report: one page, written by you.
-4. The long report: written with your agent.
-5. `data/new_images/` as a zip (Problem 5).
+1. `links.txt`, a text file with the address of your web demo and the address
+   of your code repository, in this form:
+
+   ```
+   demo: https://<your name>.github.io/<your repository>/
+   code: https://github.com/<your name>/<your repository>
+   ```
+
+   The model runs inside the web page, so the demo works without a server, and
+   nobody's photos are sent anywhere.
+2. The short report as a PDF: one page, written by you, from the template in
+   `short_report/`.
+3. The long report as a PDF: written with your agent, from the template in
+   `long_report/`.
+
+Both templates are LaTeX files that you compile on Overleaf
+(https://www.overleaf.com), with a free account. The sections "The short
+report" and "The long report" at the end of this file say how.
 
 ## How you work
 
@@ -86,13 +98,22 @@ your repository folder:
 ```
 git remote add template https://github.com/jdasam/mas1004-assignment1.git
 git fetch template
-git checkout template/main -- README.md PLAN.md AGENTS.md CLAUDE.md .gitignore .python-version pyproject.toml uv.lock requirements.txt pytest.ini assignment1_colab.ipynb src/collect.py src/clean.py src/check.py src/run.py src/export_web.py docs/index.html docs/app.js tests
+git checkout template/main -- README.md PLAN.md AGENTS.md CLAUDE.md .gitignore .python-version pyproject.toml uv.lock requirements.txt pytest.ini assignment1_colab.ipynb src/collect.py src/clean.py src/check.py src/run.py src/export_web.py docs/index.html docs/app.js tests short_report long_report/mas1004.sty
 git commit -m "Update the given files"
 ```
 
 The first line is needed only the first time. This replaces only the files
 named on the third line, none of the ones you write, and it does not touch
 your images.
+
+If your copy has no `long_report` folder yet, take it once as well. Do not do
+this again after you have started filling in the long report, because it
+replaces `long_report/long_report.tex`:
+
+```
+git checkout template/main -- long_report
+git commit -m "Add the long report template"
+```
 
 If your `src/data.py` has no `prepare_image` in it, your copy is from before
 the starter code changed to ResNet18. Make a new copy from the template and
@@ -353,12 +374,32 @@ that runs and does the wrong thing, or it reports an accuracy it never
 measured, or it quietly changes something you told it not to. "Nothing went
 wrong" will be read as "I did not check".
 
+Write it on Overleaf, from the template. Log in to Overleaf, then open one of
+these links. Each makes a new project of your own with the template in it:
+
+- [English template](https://www.overleaf.com/docs?engine=xelatex&main_document=short_report_en.tex&snip_uri%5B%5D=https://raw.githubusercontent.com/jdasam/mas1004-assignment1/main/short_report/short_report_en.tex&snip_name%5B%5D=short_report_en.tex&snip_uri%5B%5D=https://raw.githubusercontent.com/jdasam/mas1004-assignment1/main/short_report/mas1004.sty&snip_name%5B%5D=mas1004.sty)
+- [Korean template](https://www.overleaf.com/docs?engine=xelatex&main_document=short_report_ko.tex&snip_uri%5B%5D=https://raw.githubusercontent.com/jdasam/mas1004-assignment1/main/short_report/short_report_ko.tex&snip_name%5B%5D=short_report_ko.tex&snip_uri%5B%5D=https://raw.githubusercontent.com/jdasam/mas1004-assignment1/main/short_report/mas1004.sty&snip_name%5B%5D=mas1004.sty)
+
+If a link does not work, compress the `short_report` folder into a zip, and
+on Overleaf choose New Project, Upload Project. Either way, the compiler has to
+be XeLaTeX (Menu, Compiler). Do not use Overleaf's AI tools on this report. If
+it runs past one page, a red note appears at the end of the PDF.
+
 ## The long report
 
 As long as you like, written with your agent. It holds everything the "Write
 this down" boxes ask for, in order, with the pictures and the complete output
 of the checker. Every number in it has to be one you saw printed by code you
 ran.
+
+The template is `long_report/long_report.tex`. Your agent fills it in, in your
+repository: it copies the pictures into `long_report/figures/` and saves the
+output of each command into `long_report/outputs/`, from where the report
+prints it exactly as it was. Red text in the PDF is what is still missing.
+
+To make the PDF, compress the `long_report` folder into a zip, and on Overleaf
+choose New Project, Upload Project. Set the compiler to XeLaTeX (Menu,
+Compiler) and press Recompile.
 
 ## How this is graded
 

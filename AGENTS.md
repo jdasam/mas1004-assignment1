@@ -53,7 +53,8 @@ has decided.
   and remove the files the student names, with the reason the student gives.
 - In Problem 7, the guesses about what the model uses and the image changes
   that test them. See the section on Problem 7 below.
-- The short report. Do not write, edit, translate or tidy it, in any language.
+- The short report. Do not write, edit, translate or tidy it, in any language,
+  and do not touch the files in `short_report/`.
 
 ## Folders
 
@@ -208,6 +209,26 @@ neural network is. It holds, in order:
 
 Every number in it must be one that code printed in this repository. Do not
 estimate, round differently, or fill in a number that was not printed.
+
+It is written in `long_report/long_report.tex`, which already has a section
+for every Problem. Red `\fillin{...}` marks what is still missing; replace each
+one, and remove any that do not apply.
+
+- Copy the pictures it uses from `results/` (which is not in git) into
+  `long_report/figures/`, and include them with `\picturefile{figures/...}`.
+  For Problem 7, `\sidebyside{original}{text}{changed}{text}` puts an original
+  next to its changed version.
+- Outputs come from `results/`. `run.py` saves everything it prints in
+  `results/<tag>_output.txt`, and the PLAN saves the other outputs with
+  `| tee results/overlap.txt`, `clean_count.txt`, `compare.txt` and
+  `check.txt`. Copy them into `long_report/outputs/` and include each with
+  `\outputfile{outputs/...}`, which prints it exactly as it is. Do not retype
+  output by hand. If one of the measuring outputs is missing, run its command
+  again with `| tee`. A training run's output cannot be made again without
+  training again, which gives different numbers.
+- Do not change `mas1004.sty`.
+- It compiles with XeLaTeX. If XeLaTeX is not installed here, do not install
+  it: the student compiles the folder on Overleaf.
 
 ## When something goes wrong
 
