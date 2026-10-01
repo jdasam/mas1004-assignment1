@@ -55,9 +55,15 @@ goes in and what comes out, and a test that checks it.
 Everything else is given: the image downloader, the cleaning tool, the
 training script, the export script, the web page and the checker.
 
-Three rules. Never write a number that you did not see printed by code you
-ran. When the agent says it fixed something, run the test yourself before you
-believe it. Make the guesses in Problem 7 and write the short report yourself.
+You are responsible for everything you hand in, including what your agent
+wrote.
+
+- Every number in your reports has to come from output that you saw printed
+  by code you ran. Agents sometimes report numbers they never measured.
+- When the agent says it fixed something, run the test yourself and see it
+  pass.
+- You make the guesses and choose the image changes in Problem 7, and you
+  write the short report. The agent makes only the image changes you ask for.
 
 ## Getting your own copy
 
